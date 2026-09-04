@@ -651,7 +651,14 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <button class="btn btn-ghost btn-sm" id="driveBackupNowBtn" style="display:none;" onclick="performDriveBackup(true)">Şimdi Yedekle</button>
           <button class="btn btn-ghost btn-sm" id="driveRestoreBtn" style="display:none;color:var(--coral-deep);" onclick="restoreFromDrive()">Yedekten Geri Yükle</button>
         </div>
-        <div class="warn-box" style="margin-top:10px;">Google Cloud → Authorized JavaScript origins alanına yalnızca <strong>https://denizailesi0642-arch.github.io</strong> yazın. <code>/Deniz/</code> yolunu yazmayın. Bağlandıktan sonra hareketler, üyeler, ayarlar ve belgeler Drive'daki "Deniz Ailesi Derneği Yedekleri" klasöründe tutulur; sayfa açılınca senkron denenir. Tarayıcı jetonu saklamadığı için her oturumda bir kez "Senkronize et" gerekebilir.</div>
+        <div class="warn-box" style="margin-top:10px;">
+          <strong>Authorized JavaScript origins:</strong> <code>https://denizailesi0642-arch.github.io</code><br>
+          <strong>Authorized redirect URIs</strong> (mobil için zorunlu; üçünü de ekleyin):<br>
+          <code>https://denizailesi0642-arch.github.io/Deniz/</code><br>
+          <code>https://denizailesi0642-arch.github.io/Deniz</code><br>
+          <code>https://denizailesi0642-arch.github.io/Deniz/index.html</code><br>
+          Telefonda WhatsApp/Instagram içi tarayıcı değil, Chrome veya Safari kullanın. Ana ekrana eklenmiş uygulamada giriş açılmazsa siteden tarayıcıyla açın. Mobilde Client ID'yi bir kez kaydedip <strong>Bağlan</strong> / <strong>Senkronize et</strong> deyin.
+        </div>
       </div>
 
       <div class="glass card">
@@ -929,6 +936,11 @@ async function init(){
   renderRates();
   fetchRates(false);
 
+  const pendingClientId = sessionStorage.getItem('deniz-drive-client-id');
+  if(pendingClientId && !STATE.settings.driveClientId){
+    STATE.settings.driveClientId = pendingClientId;
+    await persistSettings();
+  }
   document.getElementById('driveClientIdInput').value = STATE.settings.driveClientId || '';
   renderDriveBackupUI();
   await attemptDriveSessionSync();
@@ -1975,6 +1987,53 @@ function waitForGoogleIdentity(ms){
   });
 }
 
+function isInAppBrowser(){
+  const ua = navigator.userAgent || '';
+  return /FBAN|FBAV|Instagram|Line\/|WhatsApp|Twitter|Snapchat|TikTok/i.test(ua);
+}
+function isMobileDriveAuth(){
+  const ua = navigator.userAgent || '';
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  return standalone || /Android|iPhone|iPad|iPod/i.test(ua) || (!!coarse && window.innerWidth < 900);
+}
+function getDriveRedirectUri(){
+  return location.origin + location.pathname;
+}
+function startDriveRedirectLogin(clientId){
+  try{ sessionStorage.setItem('deniz-drive-pending', '1'); }catch(e){}
+  try{ sessionStorage.setItem('deniz-drive-client-id', clientId); }catch(e){}
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: getDriveRedirectUri(),
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    include_granted_scopes: 'true',
+    state: 'deniz-drive',
+    prompt: 'select_account'
+  });
+  location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
+}
+function consumeDriveOAuthReturn(){
+  const search = new URLSearchParams(location.search);
+  const searchErr = search.get('error');
+  const hash = (location.hash || '').replace(/^#/, '');
+  const params = hash ? new URLSearchParams(hash) : null;
+  const hashErr = params && params.get('error');
+  const token = params && params.get('access_token');
+  if(searchErr || hashErr || token){
+    history.replaceState(null, '', location.pathname);
+  }
+  if(searchErr || hashErr){
+    return { error: searchErr || hashErr };
+  }
+  if(!token) return null;
+  return {
+    access_token: token,
+    expires_in: parseInt((params && params.get('expires_in')) || '3600', 10)
+  };
+}
+
 function saveDriveClientId(){
   const id = document.getElementById('driveClientIdInput').value.trim();
   if(!id){ toast('Lütfen Google Client ID girin'); return; }
@@ -1991,7 +2050,7 @@ function driveOAuthErrorMessage(resp){
   if(code === 'popup_failed_to_open') return 'Google giriş penceresi açılamadı. Tarayıcı açılır pencereleri engelliyor olabilir.';
   if(code === 'popup_closed') return 'Google giriş penceresi kapatıldı.';
   if(code === 'access_denied') return 'Google Drive erişimine izin verilmedi.';
-  if(code === 'origin_mismatch') return 'Google Cloud ayarlarında bu sitenin adresi yetkili değil. Origin olarak yalnızca https://denizailesi0642-arch.github.io ekleyin (/Deniz yazmayın).';
+  if(code === 'origin_mismatch' || code === 'redirect_uri_mismatch') return 'Google Cloud\'da JavaScript origin (https://denizailesi0642-arch.github.io) ve redirect URI (https://denizailesi0642-arch.github.io/Deniz/) eksik olabilir.';
   if(code === 'invalid_client') return "Client ID geçersiz. Google Cloud Client ID'yi kontrol edin.";
   if(desc) return 'Google OAuth: ' + desc;
   if(code) return 'Google OAuth hatası: ' + code;
@@ -2012,6 +2071,25 @@ function initGoogleAuthIfPossible(){
   return true;
 }
 
+async function onDriveTokenReceived(token, expiresIn, manual){
+  driveAccessToken = token;
+  driveAccessTokenExpiry = Date.now() + ((expiresIn||3600)*1000) - 60000;
+  STATE.settings.driveConnected = true;
+  await persistSettings();
+  renderDriveBackupUI();
+  hideDriveSyncBar();
+  showDriveSyncBar('Google Drive ile senkronize ediliyor…', 'ok', false);
+  try{
+    await syncDriveStorage({ manual: !!manual });
+    hideDriveSyncBar();
+    if(manual) toast('Google Drive depolaması hazır');
+  }catch(err){
+    console.error(err);
+    showDriveSyncBar('Drive senkronu başarısız. İnterneti kontrol edip tekrar deneyin.', 'err', true);
+    toast('Drive senkronu başarısız oldu');
+  }
+}
+
 function connectGoogleDrive(){
   const clientId = document.getElementById('driveClientIdInput').value.trim() || (STATE.settings.driveClientId || '');
   if(!clientId){ toast('Önce Google Client ID girip kaydedin'); goPage('ayarlar'); return; }
@@ -2021,6 +2099,15 @@ function connectGoogleDrive(){
   }
   STATE.settings.driveClientId = clientId;
   persistSettings();
+  if(isInAppBrowser()){
+    toast('WhatsApp/Instagram içi tarayıcıda Google girişi çalışmaz. Sayfayı Chrome veya Safari ile açın.');
+    return;
+  }
+  if(isMobileDriveAuth()){
+    showDriveSyncBar('Google hesabına yönlendiriliyorsunuz…', 'ok', false);
+    startDriveRedirectLogin(clientId);
+    return;
+  }
   googleTokenClient = null;
   if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2){
     toast('Google bağlantı kütüphanesi henüz yüklenmedi. Sayfayı yenileyip tekrar deneyin.');
@@ -2031,26 +2118,16 @@ function connectGoogleDrive(){
     return;
   }
   googleTokenClient.error_callback = (err)=>{
+    const code = err && (err.type || err.error || '');
+    if(code === 'popup_failed_to_open' || code === 'popup_closed'){
+      startDriveRedirectLogin(clientId);
+      return;
+    }
     toast(driveOAuthErrorMessage(err));
   };
   googleTokenClient.callback = async (resp)=>{
     if(resp && resp.access_token){
-      driveAccessToken = resp.access_token;
-      driveAccessTokenExpiry = Date.now() + ((resp.expires_in||3600)*1000) - 60000;
-      STATE.settings.driveConnected = true;
-      await persistSettings();
-      renderDriveBackupUI();
-      hideDriveSyncBar();
-      showDriveSyncBar('Google Drive ile senkronize ediliyor…', 'ok', false);
-      try{
-        await syncDriveStorage({ manual:true });
-        hideDriveSyncBar();
-        toast('Google Drive depolaması hazır');
-      }catch(err){
-        console.error(err);
-        showDriveSyncBar('Drive senkronu başarısız. İnterneti kontrol edip tekrar deneyin.', 'err', true);
-        toast('Drive senkronu başarısız oldu');
-      }
+      await onDriveTokenReceived(resp.access_token, resp.expires_in, true);
     }else{
       toast(driveOAuthErrorMessage(resp));
     }
@@ -2059,7 +2136,7 @@ function connectGoogleDrive(){
     googleTokenClient.requestAccessToken({ prompt: STATE.settings.driveConnected ? '' : 'consent' });
   }catch(err){
     console.error('Google OAuth start error:', err);
-    toast('Google bağlantısı başlatılamadı: ' + (err.message || err));
+    startDriveRedirectLogin(clientId);
   }
 }
 
@@ -2075,6 +2152,7 @@ function disconnectGoogleDrive(){
 
 function getDriveAccessToken(interactive){
   if(driveAccessToken && Date.now() < driveAccessTokenExpiry) return Promise.resolve(driveAccessToken);
+  if(isMobileDriveAuth()) return Promise.resolve(null);
   if(!initGoogleAuthIfPossible()) return Promise.resolve(null);
   return new Promise((resolve)=>{
     let settled = false;
@@ -2286,7 +2364,20 @@ async function syncDriveStorage(opts){
 }
 
 async function attemptDriveSessionSync(){
+  const returned = consumeDriveOAuthReturn();
+  if(returned && returned.error){
+    showDriveSyncBar(driveOAuthErrorMessage({ error: returned.error }), 'err', true);
+    return;
+  }
+  if(returned && returned.access_token){
+    await onDriveTokenReceived(returned.access_token, returned.expires_in, true);
+    return;
+  }
   if(!STATE.settings.driveConnected || !STATE.settings.driveClientId) return;
+  if(isMobileDriveAuth()){
+    showDriveSyncBar('Telefonda Drive senkronu için bir kez Bağlan / Senkronize et deyin. Aynı Google hesabını kullanın.', 'warn', true);
+    return;
+  }
   const gisReady = await waitForGoogleIdentity(5000);
   if(!gisReady || !initGoogleAuthIfPossible()){
     showDriveSyncBar('Google Drive bağlı görünüyor. Senkron için tekrar bağlanın.', 'warn', true);
@@ -2295,7 +2386,7 @@ async function attemptDriveSessionSync(){
   showDriveSyncBar('Google Drive oturumu yenileniyor…', 'ok', false);
   const token = await getDriveAccessToken(false);
   if(!token){
-    showDriveSyncBar('GitHub Pages oturumunda Drive jetonu için bir kez bağlanmanız gerekir.', 'warn', true);
+    showDriveSyncBar('Drive jetonu için bir kez Senkronize et deyin.', 'warn', true);
     return;
   }
   showDriveSyncBar('Google Drive ile senkronize ediliyor…', 'ok', false);
