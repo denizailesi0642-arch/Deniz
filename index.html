@@ -27,6 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   --sky-1:#eaf7fd;
@@ -612,6 +613,31 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       </div>
 
       <div class="glass card">
+        <div class="card-title"><span>Google Drive Otomatik Yedekleme</span></div>
+        <div class="field">
+          <label>Google OAuth Client ID</label>
+          <input type="text" id="driveClientIdInput" placeholder="xxxxxxxxxx-xxxx.apps.googleusercontent.com">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="saveDriveClientId()" style="margin-bottom:6px;">Client ID'yi Kaydet</button>
+        <div class="settings-item">
+          <div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="settings-text"><strong id="driveStatusText">Bağlı değil</strong><span id="driveLastBackupText">Henüz yedeklenmedi</span></div>
+          <button class="btn btn-primary btn-sm" id="driveConnectBtn" onclick="connectGoogleDrive()">Bağlan</button>
+          <button class="btn btn-ghost btn-sm" id="driveDisconnectBtn" style="display:none;" onclick="disconnectGoogleDrive()">Bağlantıyı Kes</button>
+        </div>
+        <div class="settings-item" id="driveAutoBackupWrap" style="display:none;">
+          <div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 3M21 12a9 9 0 11-9-9"/></svg></div>
+          <div class="settings-text"><strong>Otomatik Yedekleme</strong><span>Her değişiklikte Drive'a kaydeder</span></div>
+          <input type="checkbox" id="driveAutoBackupToggle" checked onchange="toggleDriveAutoBackup(this.checked)" style="width:18px;height:18px;flex-shrink:0;">
+        </div>
+        <div class="file-row" style="margin-top:4px;">
+          <button class="btn btn-ghost btn-sm" id="driveBackupNowBtn" style="display:none;" onclick="performDriveBackup(true)">Şimdi Yedekle</button>
+          <button class="btn btn-ghost btn-sm" id="driveRestoreBtn" style="display:none;color:var(--coral-deep);" onclick="restoreFromDrive()">Yedekten Geri Yükle</button>
+        </div>
+        <div class="warn-box" style="margin-top:10px;">Bu özellik için kendi Google Cloud hesabınızda ücretsiz bir OAuth Client ID oluşturup yukarı girmeniz gerekir. Bağlandıktan sonra tüm hareketler, üyeler ve ayarlar her değişiklikte otomatik olarak Drive'ınızdaki "Deniz Ailesi Derneği Yedekleri" klasörüne kaydedilir.</div>
+      </div>
+
+      <div class="glass card">
         <div class="card-title"><span>Veri Yönetimi</span></div>
         <div class="settings-item">
           <div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></div>
@@ -676,6 +702,9 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       <input type="file" id="txFileInput" style="display:none;" accept="image/*,.pdf" onchange="handleTxFile(event)">
       <input type="file" id="txScanInput" style="display:none;" accept="image/*" capture="environment" onchange="handleTxFile(event)">
       <div id="txFilePreview"></div>
+    </div>
+    <div class="file-row" style="margin-bottom:6px;">
+      <button type="button" class="btn btn-ghost btn-block" id="txDeleteBtn" style="display:none;color:var(--coral-deep);" onclick="deleteTransaction()">Kaydı Sil</button>
     </div>
     <button class="btn btn-primary btn-block" style="margin-top:6px;" onclick="saveTransaction()">Kaydet</button>
   </div>
@@ -829,12 +858,14 @@ async function safeDelete(key, shared){
 async function persistTx(){
   const ok = await safeSet(KEYS.TX, JSON.stringify(STATE.tx), true);
   if(!ok) toast('Kaydetme sırasında bir sorun oluştu');
+  scheduleDriveBackup();
 }
 async function persistSettings(){ await safeSet(KEYS.SETTINGS, JSON.stringify(STATE.settings), true); }
 async function persistRates(){ await safeSet(KEYS.RATES, JSON.stringify(STATE.rates), true); }
 async function persistMembers(){
   const ok = await safeSet(KEYS.MEMBERS, JSON.stringify(STATE.members), true);
   if(!ok) toast('Üye kaydedilirken bir sorun oluştu');
+  scheduleDriveBackup();
 }
 
 function genId(){ return 'tx_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -868,6 +899,9 @@ async function init(){
   renderAll();
   renderRates();
   fetchRates(false);
+
+  document.getElementById('driveClientIdInput').value = STATE.settings.driveClientId || '';
+  renderDriveBackupUI();
 }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -1064,7 +1098,12 @@ function openTxModal(type, id){
   STATE.currentAttachment = null;
   document.getElementById('txId').value = id || '';
   document.getElementById('txFilePreview').innerHTML = '';
+  document.getElementById('txDeleteBtn').style.display = id ? 'block' : 'none';
   setTxType(type, true);
+  /* setTxType, düzenleme modunda (txId doluyken) kategori listesini kasıtlı olarak yenilemiyor;
+     bu yüzden burada türe göre doğru kategori listesinin her zaman yüklendiğinden emin oluyoruz
+     (aksi halde örn. bir gider kaydı düzenlenirken gelir kategorileri gösterilip yanlış kaydedilebiliyordu). */
+  populateCategorySelect();
 
   if(id){
     const t = STATE.tx.find(x=>x.id===id);
@@ -1210,7 +1249,29 @@ async function saveTransaction(){
   await persistTx();
   closeTxModal();
   renderAll();
+  refreshOpenMemberDuesIfNeeded();
   toast('Kaydedildi');
+}
+
+async function deleteTransaction(){
+  const id = document.getElementById('txId').value;
+  if(!id) return;
+  if(!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+  STATE.tx = STATE.tx.filter(t=>t.id!==id);
+  await persistTx();
+  closeTxModal();
+  renderAll();
+  refreshOpenMemberDuesIfNeeded();
+  toast('Kayıt silindi');
+}
+
+/* Üye modalı açıkken, arkada bir işlem eklenip/düzenlenip/silindiğinde aidat listesini tazeler */
+function refreshOpenMemberDuesIfNeeded(){
+  const memberOverlay = document.getElementById('memberOverlay');
+  if(memberOverlay && memberOverlay.classList.contains('show')){
+    const memberId = document.getElementById('memberId').value;
+    if(memberId) renderMemberDuesSection(memberId);
+  }
 }
 
 /* ============ FILE VIEWER ============ */
@@ -1566,7 +1627,7 @@ function renderMemberDuesSection(memberId){
     return;
   }
   listEl.innerHTML = dues.map(t=>`
-    <div class="tx-mini">
+    <div class="tx-mini" style="cursor:pointer;" onclick="openTxModal('gelir','${t.id}')">
       <div class="tx-dot gelir">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
@@ -1844,6 +1905,235 @@ async function clearAllData(){
   await persistTx();
   renderAll();
   toast('Tüm hareketler temizlendi');
+}
+
+/* ============ GOOGLE DRIVE YEDEKLEME ============
+   Bu bölüm, uygulamanın verilerini (hareketler, üyeler, ayarlar, kurlar) kullanıcının kendi
+   Google Drive hesabına JSON dosyası olarak yedekler. Sunucu tarafı olmadığından, kimlik
+   doğrulama tamamen tarayıcıda Google Identity Services ile yapılır ve kullanıcının kendi
+   Google Cloud OAuth Client ID'sine ihtiyaç duyar (bkz. Ayarlar > Google Drive Otomatik Yedekleme). */
+let googleTokenClient = null;
+let driveAccessToken = null;
+let driveAccessTokenExpiry = 0;
+let driveBackupTimer = null;
+let driveBackupInProgress = false;
+
+function saveDriveClientId(){
+  const id = document.getElementById('driveClientIdInput').value.trim();
+  if(!id){ toast('Lütfen Google Client ID girin'); return; }
+  STATE.settings.driveClientId = id;
+  googleTokenClient = null;
+  persistSettings();
+  toast('Client ID kaydedildi');
+}
+
+function initGoogleAuthIfPossible(){
+  if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2) return false;
+  const clientId = STATE.settings.driveClientId;
+  if(!clientId) return false;
+  if(googleTokenClient) return true;
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: ()=>{}
+  });
+  return true;
+}
+
+function connectGoogleDrive(){
+  const clientId = document.getElementById('driveClientIdInput').value.trim();
+  if(!clientId){ toast('Önce Google Client ID girip kaydedin'); return; }
+  STATE.settings.driveClientId = clientId;
+  googleTokenClient = null;
+  persistSettings();
+  if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2){
+    toast('Google bağlantı kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.');
+    return;
+  }
+  if(!initGoogleAuthIfPossible()) return;
+  googleTokenClient.callback = (resp)=>{
+    if(resp && resp.access_token){
+      driveAccessToken = resp.access_token;
+      driveAccessTokenExpiry = Date.now() + ((resp.expires_in||3600)*1000) - 60000;
+      STATE.settings.driveConnected = true;
+      persistSettings();
+      renderDriveBackupUI();
+      toast('Google Drive bağlantısı kuruldu');
+      performDriveBackup(true);
+    }else{
+      toast('Google Drive bağlantısı kurulamadı veya reddedildi');
+    }
+  };
+  googleTokenClient.requestAccessToken({ prompt:'consent' });
+}
+
+function disconnectGoogleDrive(){
+  driveAccessToken = null;
+  driveAccessTokenExpiry = 0;
+  STATE.settings.driveConnected = false;
+  persistSettings();
+  renderDriveBackupUI();
+  toast('Google Drive bağlantısı kesildi');
+}
+
+/* Geçerli bir erişim jetonu döndürür; süresi dolmuşsa sessizce (mümkünse) yeniler. */
+function getDriveAccessToken(){
+  if(driveAccessToken && Date.now() < driveAccessTokenExpiry) return Promise.resolve(driveAccessToken);
+  if(!initGoogleAuthIfPossible()) return Promise.resolve(null);
+  return new Promise((resolve)=>{
+    googleTokenClient.callback = (resp)=>{
+      if(resp && resp.access_token){
+        driveAccessToken = resp.access_token;
+        driveAccessTokenExpiry = Date.now() + ((resp.expires_in||3600)*1000) - 60000;
+        resolve(driveAccessToken);
+      }else{
+        resolve(null);
+      }
+    };
+    googleTokenClient.requestAccessToken({ prompt:'' });
+  });
+}
+
+async function driveApiFetch(url, options){
+  const token = await getDriveAccessToken();
+  if(!token) throw new Error('drive-no-token');
+  options = options || {};
+  options.headers = Object.assign({}, options.headers, { Authorization: 'Bearer ' + token });
+  const res = await fetch(url, options);
+  if(res.status===401){ driveAccessToken = null; throw new Error('drive-unauthorized'); }
+  return res;
+}
+
+async function driveFindOrCreateFolder(){
+  if(STATE.settings.driveFolderId) return STATE.settings.driveFolderId;
+  const name = 'Deniz Ailesi Derneği Yedekleri';
+  const q = encodeURIComponent(`name='${name.replace(/'/g,"\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const res = await driveApiFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+  const data = await res.json();
+  if(data.files && data.files.length>0){
+    STATE.settings.driveFolderId = data.files[0].id;
+  }else{
+    const createRes = await driveApiFetch('https://www.googleapis.com/drive/v3/files', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ name, mimeType:'application/vnd.google-apps.folder' })
+    });
+    const created = await createRes.json();
+    STATE.settings.driveFolderId = created.id;
+  }
+  await persistSettings();
+  return STATE.settings.driveFolderId;
+}
+
+function buildDriveBackupPayload(){
+  return JSON.stringify({
+    app: 'deniz-ailesi-dernegi',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    tx: STATE.tx,
+    members: STATE.members,
+    settings: { orgName: STATE.settings.orgName },
+    rates: STATE.rates
+  }, null, 2);
+}
+
+/* Her veri değişikliğinden birkaç saniye sonra tek seferde yedekler (art arda çağrıları birleştirir). */
+function scheduleDriveBackup(){
+  if(!STATE.settings.driveConnected || STATE.settings.driveAutoBackup===false) return;
+  clearTimeout(driveBackupTimer);
+  driveBackupTimer = setTimeout(()=>performDriveBackup(false), 4000);
+}
+
+async function performDriveBackup(manualTrigger){
+  if(driveBackupInProgress) return;
+  if(!STATE.settings.driveClientId || !STATE.settings.driveConnected){
+    if(manualTrigger) toast('Önce Google Drive\'a bağlanın');
+    return;
+  }
+  driveBackupInProgress = true;
+  try{
+    const folderId = await driveFindOrCreateFolder();
+    const payload = buildDriveBackupPayload();
+    const filename = 'deniz-dernek-yedek.json';
+    const metadata = { name: filename, mimeType:'application/json' };
+    let fileId = STATE.settings.driveFileId;
+    if(!fileId){ metadata.parents = [folderId]; }
+    const boundary = 'denizdernek-' + Date.now();
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n` +
+      `--${boundary}--`;
+    const url = fileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const res = await driveApiFetch(url, {
+      method: fileId ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body
+    });
+    if(!res.ok) throw new Error('drive upload failed: ' + res.status);
+    const data = await res.json();
+    if(!fileId) STATE.settings.driveFileId = data.id;
+    STATE.settings.driveLastBackup = Date.now();
+    await persistSettings();
+    renderDriveBackupUI();
+    if(manualTrigger) toast('Google Drive yedeklemesi tamamlandı');
+  }catch(err){
+    console.error('drive backup error', err);
+    if(manualTrigger) toast('Yedekleme başarısız oldu. Bağlantıyı ve internet erişimini kontrol edin.');
+  }finally{
+    driveBackupInProgress = false;
+  }
+}
+
+async function restoreFromDrive(){
+  if(!STATE.settings.driveFileId){ toast('Kayıtlı bir Drive yedeği bulunamadı'); return; }
+  if(!confirm('Bu cihazdaki mevcut veriler, Drive yedeğindeki verilerle değiştirilecek. Emin misiniz?')) return;
+  try{
+    const res = await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${STATE.settings.driveFileId}?alt=media`);
+    if(!res.ok) throw new Error('drive download failed: ' + res.status);
+    const data = await res.json();
+    STATE.tx = data.tx || [];
+    STATE.members = data.members || [];
+    if(data.settings && data.settings.orgName) STATE.settings.orgName = data.settings.orgName;
+    if(data.rates) STATE.rates = data.rates;
+    await persistTx();
+    await persistMembers();
+    await persistSettings();
+    await persistRates();
+    renderAll();
+    renderRates();
+    document.getElementById('orgNameDisplay').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+    document.getElementById('orgNameInput').value = STATE.settings.orgName || '';
+    toast('Drive yedeğinden geri yüklendi');
+  }catch(err){
+    console.error('drive restore error', err);
+    toast('Geri yükleme başarısız oldu');
+  }
+}
+
+function toggleDriveAutoBackup(checked){
+  STATE.settings.driveAutoBackup = checked;
+  persistSettings();
+  if(checked) scheduleDriveBackup();
+}
+
+function renderDriveBackupUI(){
+  const statusEl = document.getElementById('driveStatusText');
+  if(!statusEl) return;
+  const connected = !!STATE.settings.driveConnected;
+  statusEl.textContent = connected ? 'Google Drive\'a bağlı' : 'Bağlı değil';
+  statusEl.style.color = connected ? 'var(--teal)' : 'var(--ink-soft)';
+  document.getElementById('driveConnectBtn').style.display = connected ? 'none' : '';
+  document.getElementById('driveDisconnectBtn').style.display = connected ? '' : 'none';
+  document.getElementById('driveBackupNowBtn').style.display = connected ? '' : 'none';
+  document.getElementById('driveRestoreBtn').style.display = (connected && STATE.settings.driveFileId) ? '' : 'none';
+  document.getElementById('driveAutoBackupWrap').style.display = connected ? 'flex' : 'none';
+  document.getElementById('driveAutoBackupToggle').checked = STATE.settings.driveAutoBackup!==false;
+  const lastEl = document.getElementById('driveLastBackupText');
+  lastEl.textContent = STATE.settings.driveLastBackup
+    ? ('Son yedekleme: ' + new Date(STATE.settings.driveLastBackup).toLocaleString('tr-TR'))
+    : 'Henüz yedeklenmedi';
 }
 
 /* ============ TOAST ============ */
