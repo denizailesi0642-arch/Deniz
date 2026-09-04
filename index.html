@@ -4,15 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Deniz Ailesi Derneği</title>
-<link rel="manifest" href="./manifest.json">
+
+<!-- PWA: Ana ekrana ekleme / kurulabilir uygulama desteği (mobil + PC) -->
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b3654">
-<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="background-color" content="#eaf7fd">
+
+<!-- Android / Chrome / Edge -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+<!-- iOS / Safari: "Ana Ekrana Ekle" desteği -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Deniz Derneği">
-<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Windows / masaüstü kısayol rengi -->
+<meta name="msapplication-TileColor" content="#0b3654">
+<meta name="msapplication-TileImage" content="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -266,8 +277,6 @@ table.tx-table{width:100%;border-collapse:collapse;font-size:12.5px;}
 table.tx-table th{text-align:left;padding:8px 8px;color:var(--ink-soft);font-size:11px;border-bottom:2px solid rgba(11,54,84,0.12);}
 table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-md);}
-.list-view{display:block;}
-.table-view{display:none;}
 
 /* ---------- settings ---------- */
 .settings-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(11,54,84,0.07);}
@@ -315,7 +324,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 @media print{
   @page{ margin:12mm; size:auto; }
   html,body{height:auto !important;min-height:0 !important;background:#fff !important;overflow:visible !important;}
-  .topbar,.nav-mobile,.nav-desktop,.quick-actions,.report-actions,.search-bar,.filter-chips,.period-tabs,.range-row,.btn,#toast,.hero-fx,.overlay,.no-print{display:none !important;}
+  .topbar,.nav-mobile,.nav-desktop,.quick-actions,.report-actions,.search-bar,.filter-chips,.period-tabs,.range-row,.btn,#toast,.overlay,.no-print{display:none !important;}
   .app{display:block !important;max-width:100% !important;padding:0 !important;margin:0 !important;}
   .main-col{width:100% !important;}
   .page{display:none !important;position:static !important;height:0 !important;overflow:hidden !important;}
@@ -328,6 +337,8 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
   table.tx-table{font-size:11px;width:100%;}
   table.tx-table thead{display:table-header-group;}
   table.tx-table tr{break-inside:avoid;page-break-inside:avoid;}
+  .member-list-view{display:none !important;}
+  .member-print-view{display:block !important;}
 }
 
 /* ---------- desktop layout ---------- */
@@ -450,6 +461,18 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 
     <!-- MEMBERS -->
     <section class="page" id="page-uyeler">
+      <div class="glass card print-header">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="57" fill="#0b3654"/>
+          <circle cx="85" cy="35" r="9" fill="#ff5a45"/>
+          <path d="M8 64 Q28 48 48 64 T88 64 T128 64" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h2 id="printOrgNameMembers">Deniz Ailesi Derneği</h2>
+          <div style="font-size:12px;color:#456;">Üye Listesi · <span id="printMemberDate"></span></div>
+        </div>
+      </div>
+
       <div class="stat-grid" id="memberStatGrid" style="margin-bottom:12px;"></div>
       <div class="search-bar">
         <input type="text" id="memberSearchInput" placeholder="Ad, baba adı veya telefon ara..." oninput="renderMembersList()">
@@ -462,8 +485,23 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
         <div class="chip" data-val="paid" onclick="setMemberStatusFilter('paid')">Bu Ay Ödeyen</div>
         <div class="chip" data-val="unpaid" onclick="setMemberStatusFilter('unpaid')">Bu Ay Ödemeyen</div>
       </div>
-      <div class="glass card" style="padding:6px 14px;">
+
+      <div class="report-actions no-print">
+        <button class="btn btn-ghost" onclick="printMembers()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg> Yazdır / Çıktı Al</button>
+        <button class="btn btn-primary" onclick="exportMembersExcel()"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg> Excel'e Aktar</button>
+      </div>
+
+      <div class="glass card member-list-view" style="padding:6px 14px;">
         <div id="memberListContainer"></div>
+      </div>
+
+      <div class="glass card member-print-view" style="padding:10px 14px;display:none;">
+        <div class="table-wrap">
+          <table class="tx-table">
+            <thead><tr><th>Ad Soyad</th><th>Baba Adı</th><th>Telefon</th><th>Üyelik Tarihi</th><th>Durum</th><th style="text-align:right;">Toplam Ödenen Aidat</th></tr></thead>
+            <tbody id="memberPrintTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -520,7 +558,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
         <div class="card-title"><span>Rapor Hareketleri</span></div>
         <div class="table-wrap">
           <table class="tx-table">
-            <thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th><th>Kişi</th><th style="text-align:right;">Tutar</th></tr></thead>
+            <thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th><th>Kişi</th><th>Baba Adı</th><th style="text-align:right;">Tutar</th></tr></thead>
             <tbody id="repTableBody"></tbody>
           </table>
         </div>
@@ -529,6 +567,15 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 
     <!-- SETTINGS -->
     <section class="page" id="page-ayarlar">
+      <div class="glass card">
+        <div class="card-title"><span>Uygulama</span></div>
+        <div class="settings-item">
+          <div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="settings-text"><strong>Ana Ekrana Ekle / Yükle</strong><span>Mobilde ve bilgisayarda uygulama gibi kullanın</span></div>
+          <button class="btn btn-primary btn-sm" onclick="installApp()">Yükle</button>
+        </div>
+      </div>
+
       <div class="glass card">
         <div class="card-title"><span>Dernek Bilgileri</span></div>
         <div class="field"><label>Dernek Adı</label><input type="text" id="orgNameInput"></div>
@@ -571,7 +618,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <div class="settings-text"><strong>Tüm Hareketleri Temizle</strong><span>Bu işlem geri alınamaz</span></div>
           <button class="btn btn-ghost btn-sm" onclick="clearAllData()" style="color:var(--coral-deep);">Temizle</button>
         </div>
-        <div class="warn-box">Bu uygulamadaki hareket verileri, aynı bağlantıyı kullanan tüm dernek üyeleri tarafından görülebilir ve düzenlenebilir şekilde ortak saklanır.</div>
+        <div class="warn-box">Bu uygulamadaki tüm veriler (hareketler, üyeler, ayarlar) yalnızca <strong>bu cihazdaki bu tarayıcıya</strong> kaydedilir; başka bir cihaz veya tarayıcıdan görülemez ve paylaşılmaz. Tarayıcı verilerini temizlerseniz kayıtlar silinir. Düzenli olarak "Tüm Verileri Dışa Aktar" ile Excel yedeği almanız ve ortak kullanım için o dosyayı paylaşmanız önerilir.</div>
       </div>
     </section>
 
@@ -671,10 +718,55 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
     </div>
     <div class="field"><label>Adres</label><input type="text" id="memberAddress" placeholder="Adres"></div>
     <div class="field"><label>Not</label><input type="text" id="memberNote" placeholder="Varsa ek bilgi"></div>
+
+    <div class="glass card" id="memberDuesSection" style="display:none;padding:14px;margin:4px 0 14px;">
+      <div class="card-title">
+        <span>Aidat / Ödemeler</span>
+        <button type="button" class="btn btn-coral btn-sm" onclick="openMemberPaymentModal()">+ Ödeme Ekle</button>
+      </div>
+      <div id="memberDuesSummary" style="margin-bottom:6px;"></div>
+      <div id="memberDuesList"></div>
+    </div>
+
     <div class="file-row" style="margin-bottom:6px;">
       <button type="button" class="btn btn-ghost btn-block" id="memberDeleteBtn" style="display:none;color:var(--coral-deep);" onclick="deleteMember()">Üyeyi Sil</button>
     </div>
     <button class="btn btn-primary btn-block" onclick="saveMember()">Kaydet</button>
+  </div>
+</div>
+
+<!-- Member Payment Modal (Üye Aidat Ödemesi) -->
+<div class="overlay" id="memberPaymentOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Üye Ödemesi Al</h3>
+      <button class="modal-close" onclick="closeMemberPaymentModal()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <input type="hidden" id="memberPaymentMemberId">
+    <div class="field">
+      <label>Üye</label>
+      <input type="text" id="memberPaymentName" readonly style="background:rgba(11,54,84,0.06);font-weight:700;">
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Tarih</label><input type="date" id="memberPaymentDate"></div>
+      <div class="field"><label>Tutar</label><input type="number" id="memberPaymentAmount" placeholder="0.00" step="0.01" min="0" oninput="updateMemberPaymentConverted()"></div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Birim</label>
+        <select id="memberPaymentCurrency" onchange="updateMemberPaymentConverted()">
+          <option value="TRY">TL</option>
+          <option value="USD">USD ($)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+          <option value="XAU">Gram Altın</option>
+        </select>
+      </div>
+      <div class="field"><label>TL Karşılığı</label><input type="text" id="memberPaymentConvertedDisplay" readonly></div>
+    </div>
+    <div class="field"><label>Açıklama</label><input type="text" id="memberPaymentDesc" placeholder="Örn: Ocak ayı aidatı"></div>
+    <div class="warn-box" style="margin-top:0;margin-bottom:12px;">Bu ödeme otomatik olarak <strong>"Üyelik Aidatı"</strong> kategorisiyle gelir kaydına eklenir.</div>
+    <button class="btn btn-primary btn-block" onclick="saveMemberPayment()">Ödemeyi Kaydet ve Gelire Ekle</button>
   </div>
 </div>
 
@@ -718,17 +810,20 @@ let STATE = {
   period: 'daily'
 };
 
-/* ============ STORAGE HELPERS ============ */
+/* ============ STORAGE HELPERS ============
+   Bu sürüm tarayıcının kendi localStorage'ını kullanır (GitHub Pages / bağımsız barındırma için).
+   Not: localStorage sadece kullanılan cihaz+tarayıcıya özeldir; farklı cihazlar/kullanıcılar arasında
+   OTOMATİK PAYLAŞILMAZ. Dernek üyeleri arasında ortak veri için Ayarlar > Excel'e Aktar/İçe Aktar kullanın. */
 async function safeGet(key, shared){
-  try{ const r = await window.storage.get(key, shared); return r ? r.value : null; }
+  try{ const v = window.localStorage.getItem(key); return v; }
   catch(e){ return null; }
 }
 async function safeSet(key, value, shared){
-  try{ const r = await window.storage.set(key, value, shared); return !!r; }
+  try{ window.localStorage.setItem(key, value); return true; }
   catch(e){ console.error('storage set failed', key, e); return false; }
 }
 async function safeDelete(key, shared){
-  try{ await window.storage.delete(key, shared); }catch(e){}
+  try{ window.localStorage.removeItem(key); }catch(e){}
 }
 
 async function persistTx(){
@@ -764,6 +859,7 @@ async function init(){
   if(rawSettings){ STATE.settings = JSON.parse(rawSettings); }
   document.getElementById('orgNameDisplay').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('printOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+  document.getElementById('printOrgNameMembers').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('orgNameInput').value = STATE.settings.orgName || '';
 
   const rawRates = await safeGet(KEYS.RATES, true);
@@ -1268,6 +1364,13 @@ function getReportRange(){
   return {start:s, end:e, label:'Tarih Aralığı · '+formatDateTR(s)+' - '+formatDateTR(e)};
 }
 
+/* Kişi adını üye kaydıyla eşleştirir (rapor çıktısında Baba Adı göstermek için) */
+function findMemberByName(name){
+  const n = (name||'').toLowerCase().trim();
+  if(!n) return null;
+  return STATE.members.find(m=> (m.adSoyad||'').toLowerCase().trim()===n) || null;
+}
+
 let currentReportRows = [];
 function renderReport(){
   const {start, end, label} = getReportRange();
@@ -1301,15 +1404,20 @@ function renderReport(){
   }).join('');
 
   const tbody = document.getElementById('repTableBody');
-  tbody.innerHTML = rows.length===0 ? `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:16px;">Kayıt bulunamadı</td></tr>` :
-    rows.map(t=>`<tr>
+  tbody.innerHTML = rows.length===0 ? `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:16px;">Kayıt bulunamadı</td></tr>` :
+    rows.map(t=>{
+      const mem = findMemberByName(t.person);
+      const babaAdi = mem ? (mem.babaAdi||'') : '';
+      return `<tr>
       <td>${formatDateTR(t.date)}</td>
       <td>${t.type==='gelir'?'Gelir':'Gider'}</td>
       <td>${escapeHtml(t.category)}</td>
       <td>${escapeHtml(t.description||'')}</td>
       <td>${escapeHtml(t.person||'')}</td>
+      <td>${escapeHtml(babaAdi)}</td>
       <td style="text-align:right;" class="num">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}${t.currency && t.currency!=='TRY' ? `<br><span style="font-size:10px;color:var(--ink-soft);">${Number(t.amount).toLocaleString('tr-TR')} ${t.currency}</span>` : ''}</td>
-    </tr>`).join('');
+    </tr>`;
+    }).join('');
 }
 
 function printReport(){
@@ -1417,13 +1525,18 @@ function renderMemberDatalist(){
   dl.innerHTML = STATE.members.map(m=>`<option value="${escapeHtml(m.adSoyad)}">`).join('');
 }
 
-/* Bir üyenin "Üyelik Aidatı" kategorili gelir kayıtlarından toplam ödeme ve bu ay durumu */
-function computeMemberDues(member){
+/* Bir üyenin tüm "Üyelik Aidatı" ödemelerinin listesi (tarihe göre azalan) */
+function getMemberDuesList(member){
   const name = (member.adSoyad||'').toLowerCase().trim();
-  const dues = STATE.tx.filter(t=>
-    t.type==='gelir' && t.category==='Üyelik Aidatı' &&
-    (t.person||'').toLowerCase().trim() === name && name!==''
-  );
+  if(name==='') return [];
+  return STATE.tx
+    .filter(t=> t.type==='gelir' && t.category==='Üyelik Aidatı' && (t.person||'').toLowerCase().trim()===name)
+    .sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
+}
+
+/* Bir üyenin toplam ödemesi ve bu ay durumu (getMemberDuesList'i temel alır) */
+function computeMemberDues(member){
+  const dues = getMemberDuesList(member);
   const total = dues.reduce((s,t)=>s+txTRY(t),0);
   const now = new Date();
   const paidThisMonth = dues.some(t=>{
@@ -1433,6 +1546,115 @@ function computeMemberDues(member){
   let lastDate = null;
   dues.forEach(t=>{ if(!lastDate || new Date(t.date) > new Date(lastDate)) lastDate = t.date; });
   return { total, paidThisMonth, lastDate };
+}
+
+/* Üye modalı içindeki Aidat/Ödemeler bölümünü çizer */
+function renderMemberDuesSection(memberId){
+  const m = STATE.members.find(x=>x.id===memberId);
+  const summaryEl = document.getElementById('memberDuesSummary');
+  const listEl = document.getElementById('memberDuesList');
+  if(!m || !summaryEl || !listEl) return;
+  const dues = getMemberDuesList(m);
+  const total = dues.reduce((s,t)=>s+txTRY(t),0);
+  summaryEl.innerHTML = `
+    <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="glass stat-card income"><small>Toplam Ödenen Aidat</small><strong class="num">${fmtMoney(total)}</strong></div>
+      <div class="glass stat-card"><small>Ödeme Sayısı</small><strong class="num">${dues.length}</strong></div>
+    </div>`;
+  if(dues.length===0){
+    listEl.innerHTML = `<div class="empty-state" style="padding:14px 6px;">Henüz ödeme kaydı yok</div>`;
+    return;
+  }
+  listEl.innerHTML = dues.map(t=>`
+    <div class="tx-mini">
+      <div class="tx-dot gelir">${iconForCat(t)}</div>
+      <div class="tx-info">
+        <strong>${escapeHtml(t.description||t.category)}</strong>
+        <span>${formatDateTR(t.date)}${currencyNote(t)}</span>
+      </div>
+      <div class="tx-amt gelir">+${fmtMoney(txTRY(t))}</div>
+    </div>
+  `).join('');
+}
+
+/* ============ ÜYE ÖDEMESİ (AİDAT) MODALI ============ */
+function openMemberPaymentModal(memberId){
+  const id = memberId || document.getElementById('memberId').value;
+  if(!id){ toast('Önce üyeyi kaydedin, sonra ödeme ekleyin'); return; }
+  const m = STATE.members.find(x=>x.id===id);
+  if(!m){ toast('Üye bulunamadı'); return; }
+  document.getElementById('memberPaymentMemberId').value = id;
+  document.getElementById('memberPaymentName').value = m.adSoyad;
+  document.getElementById('memberPaymentDate').value = todayStr();
+  document.getElementById('memberPaymentAmount').value = '';
+  document.getElementById('memberPaymentCurrency').value = 'TRY';
+  const now = new Date();
+  const ayAdlari = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  document.getElementById('memberPaymentDesc').value = ayAdlari[now.getMonth()] + ' ' + now.getFullYear() + ' ayı aidatı';
+  updateMemberPaymentConverted();
+  document.getElementById('memberPaymentOverlay').classList.add('show');
+}
+function closeMemberPaymentModal(){ document.getElementById('memberPaymentOverlay').classList.remove('show'); }
+
+function updateMemberPaymentConverted(){
+  const amt = parseFloat(document.getElementById('memberPaymentAmount').value) || 0;
+  const cur = document.getElementById('memberPaymentCurrency').value;
+  const disp = document.getElementById('memberPaymentConvertedDisplay');
+  const rate = currencyRateFor(cur);
+  if(cur==='TRY'){
+    disp.value = fmtMoney(amt);
+    disp.classList.remove('rate-missing');
+    return;
+  }
+  if(rate==null){
+    disp.value = 'Kur girilmemiş';
+    disp.classList.add('rate-missing');
+    return;
+  }
+  disp.value = fmtMoney(amt*rate) + '  (kur: ' + rate.toLocaleString('tr-TR',{maximumFractionDigits:2}) + ')';
+  disp.classList.remove('rate-missing');
+}
+
+async function saveMemberPayment(){
+  const memberId = document.getElementById('memberPaymentMemberId').value;
+  const m = STATE.members.find(x=>x.id===memberId);
+  if(!m){ toast('Üye bulunamadı'); return; }
+  const amount = parseFloat(document.getElementById('memberPaymentAmount').value);
+  const date = document.getElementById('memberPaymentDate').value;
+  const currency = document.getElementById('memberPaymentCurrency').value;
+  if(!date){ toast('Lütfen tarih seçin'); return; }
+  if(!amount || amount<=0){ toast('Lütfen geçerli bir tutar girin'); return; }
+
+  const rate = currencyRateFor(currency);
+  if(currency!=='TRY' && rate==null){
+    toast('Bu birim için kur girilmemiş. Önce Anasayfa\'dan "Manuel gir" ile kuru girin.');
+    return;
+  }
+  const amountTRY = currency==='TRY' ? amount : amount*rate;
+
+  const record = {
+    id: genId(),
+    type: 'gelir',
+    date,
+    amount,
+    currency,
+    rateUsed: currency==='TRY' ? 1 : rate,
+    amountTRY,
+    category: 'Üyelik Aidatı',
+    description: document.getElementById('memberPaymentDesc').value.trim() || 'Üyelik aidatı',
+    person: m.adSoyad,
+    attachmentId: null,
+    attachmentName: null
+  };
+
+  STATE.tx.push(record);
+  await persistTx();
+  closeMemberPaymentModal();
+  renderAll();
+  if(document.getElementById('memberOverlay').classList.contains('show')){
+    renderMemberDuesSection(memberId);
+  }
+  toast('Ödeme kaydedildi ve gelire eklendi');
 }
 
 function setMemberStatusFilter(v){
@@ -1455,10 +1677,9 @@ function renderMemberStats(){
   `;
 }
 
-function renderMembersList(){
-  const listEl = document.getElementById('memberListContainer');
-  if(!listEl) return;
-  renderMemberStats();
+/* Arama/durum filtresi uygulanmış ve isme göre sıralanmış üye listesi.
+   Hem ekran listesi hem de yazdırma tablosu bu tek fonksiyonu kullanır. */
+function getFilteredSortedMembers(){
   const q = (document.getElementById('memberSearchInput').value||'').toLowerCase().trim();
   let list = STATE.members.map(m=>({ m, dues: computeMemberDues(m) }));
   if(q){
@@ -1471,6 +1692,14 @@ function renderMembersList(){
   if(STATE.memberStatusFilter==='paid') list = list.filter(({dues})=>dues.paidThisMonth);
   if(STATE.memberStatusFilter==='unpaid') list = list.filter(({dues})=>!dues.paidThisMonth);
   list.sort((a,b)=> (a.m.adSoyad||'').localeCompare(b.m.adSoyad||'', 'tr'));
+  return list;
+}
+
+function renderMembersList(){
+  const listEl = document.getElementById('memberListContainer');
+  if(!listEl) return;
+  renderMemberStats();
+  const list = getFilteredSortedMembers();
   if(list.length===0){
     listEl.innerHTML = emptyStateHtml('Üye bulunamadı');
     return;
@@ -1483,9 +1712,57 @@ function renderMembersList(){
         <span>${m.babaAdi?('Baba Adı: '+escapeHtml(m.babaAdi)):''}${m.telefon?(' · '+escapeHtml(m.telefon)):''}</span>
         <span class="tag" style="${dues.paidThisMonth?'background:rgba(15,155,142,0.14);color:var(--teal);':'background:rgba(255,90,69,0.14);color:var(--coral-deep);'}">${dues.paidThisMonth?'Bu Ay Ödendi':'Bu Ay Ödenmedi'}</span>
       </div>
-      <div class="tx-amt gelir" style="text-align:right;">${dues.total>0?fmtMoney(dues.total):'-'}<br><span style="font-size:10px;color:var(--ink-soft);font-weight:500;">toplam aidat</span></div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="tx-amt gelir">${dues.total>0?fmtMoney(dues.total):'-'}<br><span style="font-size:10px;color:var(--ink-soft);font-weight:500;">toplam aidat</span></div>
+        <button type="button" class="btn btn-coral btn-sm" style="margin-top:6px;" onclick="event.stopPropagation();openMemberPaymentModal('${m.id}')">+ Öde</button>
+      </div>
     </div>
   `).join('');
+}
+
+/* ============ ÜYE LİSTESİ YAZDIRMA (PDF) VE EXCEL ============ */
+function renderMemberPrintTable(){
+  const tbody = document.getElementById('memberPrintTableBody');
+  if(!tbody) return;
+  const list = getFilteredSortedMembers();
+  tbody.innerHTML = list.length===0 ? `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:16px;">Üye bulunamadı</td></tr>` :
+    list.map(({m,dues})=>`<tr>
+      <td>${escapeHtml(m.adSoyad||'')}</td>
+      <td>${escapeHtml(m.babaAdi||'')}</td>
+      <td>${escapeHtml(m.telefon||'')}</td>
+      <td>${m.uyelikTarihi?formatDateTR(m.uyelikTarihi):''}</td>
+      <td>${dues.paidThisMonth?'Bu Ay Ödendi':'Bu Ay Ödenmedi'}</td>
+      <td style="text-align:right;" class="num">${dues.total>0?fmtMoney(dues.total):'-'}</td>
+    </tr>`).join('');
+}
+
+function printMembers(){
+  if(STATE.members.length===0){ toast('Yazdırılacak üye yok'); return; }
+  renderMemberPrintTable();
+  document.getElementById('printMemberDate').textContent = formatDateTR(todayStr());
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
+  document.getElementById('page-uyeler').classList.add('print-active');
+  window.print();
+}
+
+function exportMembersExcel(){
+  const list = getFilteredSortedMembers();
+  if(list.length===0){ toast('Aktarılacak üye yok'); return; }
+  const rows = list.map(({m,dues})=>({
+    'Ad Soyad': m.adSoyad||'',
+    'Baba Adı': m.babaAdi||'',
+    'Telefon': m.telefon||'',
+    'Üyelik Tarihi': m.uyelikTarihi||'',
+    'Adres': m.adres||'',
+    'Durum': dues.paidThisMonth ? 'Bu Ay Ödendi' : 'Bu Ay Ödenmedi',
+    'Toplam Ödenen Aidat (TL)': dues.total,
+    'Not': m.not||''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:18},{wch:14},{wch:14},{wch:24},{wch:16},{wch:18},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Üyeler');
+  XLSX.writeFile(wb, 'deniz-dernek-uye-listesi.xlsx');
 }
 
 function openMemberModal(id){
@@ -1502,6 +1779,8 @@ function openMemberModal(id){
       document.getElementById('memberAddress').value = m.adres||'';
       document.getElementById('memberNote').value = m.not||'';
     }
+    document.getElementById('memberDuesSection').style.display = 'block';
+    renderMemberDuesSection(id);
   }else{
     document.getElementById('memberModalTitle').textContent = 'Üye Ekle';
     document.getElementById('memberName').value = '';
@@ -1510,6 +1789,7 @@ function openMemberModal(id){
     document.getElementById('memberJoinDate').value = todayStr();
     document.getElementById('memberAddress').value = '';
     document.getElementById('memberNote').value = '';
+    document.getElementById('memberDuesSection').style.display = 'none';
   }
   document.getElementById('memberOverlay').classList.add('show');
 }
@@ -1555,6 +1835,7 @@ async function saveOrgName(){
   await persistSettings();
   document.getElementById('orgNameDisplay').textContent = name;
   document.getElementById('printOrgName').textContent = name;
+  document.getElementById('printOrgNameMembers').textContent = name;
   toast('Dernek adı güncellendi');
 }
 async function clearAllData(){
@@ -1580,16 +1861,56 @@ document.getElementById('txOverlay').addEventListener('click', e=>{ if(e.target.
 document.getElementById('ratesOverlay').addEventListener('click', e=>{ if(e.target.id==='ratesOverlay') closeRatesModal(); });
 document.getElementById('fileOverlay').addEventListener('click', e=>{ if(e.target.id==='fileOverlay') closeFileViewer(); });
 document.getElementById('memberOverlay').addEventListener('click', e=>{ if(e.target.id==='memberOverlay') closeMemberModal(); });
+document.getElementById('memberPaymentOverlay').addEventListener('click', e=>{ if(e.target.id==='memberPaymentOverlay') closeMemberPaymentModal(); });
+
+/* ============ PWA: SERVICE WORKER + ANA EKRANA EKLE ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function isStandaloneApp(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+}
+
+async function installApp(){
+  if(isStandaloneApp()){
+    toast('Uygulama zaten ana ekrana eklenmiş görünüyor');
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if(outcome==='accepted') toast('Uygulama ana ekrana eklendi');
+    deferredInstallPrompt = null;
+    return;
+  }
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints>1);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  if(isIOS && isSafari){
+    alert('Ana Ekrana Eklemek İçin:\n\n1) Alt/üst menüdeki Paylaş (kare + ok) simgesine dokunun\n2) "Ana Ekrana Ekle" seçeneğini seçin\n3) "Ekle" ye dokunun');
+  }else if(isIOS){
+    alert('Bu tarayıcıda otomatik kurulum desteklenmiyor.\n\nSafari ile açıp Paylaş simgesinden "Ana Ekrana Ekle" seçeneğini kullanabilirsiniz.');
+  }else{
+    alert('Uygulamayı Yüklemek İçin:\n\nTarayıcınızın adres çubuğundaki kurulum simgesine tıklayın veya tarayıcı menüsünden (⋮ / ...) "Uygulamayı Yükle" ya da "Ana ekrana ekle" seçeneğini kullanın.');
+  }
+}
+
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+});
 
 /* ============ START ============ */
 setPeriod('daily');
 init();
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  });
-}
 </script>
 </body>
 </html>
