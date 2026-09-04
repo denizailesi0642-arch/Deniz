@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Deniz Ailesi Derneği</title>
+
+<!-- PWA: Ana ekrana ekleme / kurulabilir uygulama desteği (mobil + PC) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b3654">
+<meta name="background-color" content="#eaf7fd">
+
+<!-- Android / Chrome / Edge -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+<!-- iOS / Safari: "Ana Ekrana Ekle" desteği -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Deniz Derneği">
+
+<!-- Windows / masaüstü kısayol rengi -->
+<meta name="msapplication-TileColor" content="#0b3654">
+<meta name="msapplication-TileImage" content="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -547,6 +567,15 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 
     <!-- SETTINGS -->
     <section class="page" id="page-ayarlar">
+      <div class="glass card">
+        <div class="card-title"><span>Uygulama</span></div>
+        <div class="settings-item">
+          <div class="settings-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <div class="settings-text"><strong>Ana Ekrana Ekle / Yükle</strong><span>Mobilde ve bilgisayarda uygulama gibi kullanın</span></div>
+          <button class="btn btn-primary btn-sm" onclick="installApp()">Yükle</button>
+        </div>
+      </div>
+
       <div class="glass card">
         <div class="card-title"><span>Dernek Bilgileri</span></div>
         <div class="field"><label>Dernek Adı</label><input type="text" id="orgNameInput"></div>
@@ -1833,6 +1862,51 @@ document.getElementById('ratesOverlay').addEventListener('click', e=>{ if(e.targ
 document.getElementById('fileOverlay').addEventListener('click', e=>{ if(e.target.id==='fileOverlay') closeFileViewer(); });
 document.getElementById('memberOverlay').addEventListener('click', e=>{ if(e.target.id==='memberOverlay') closeMemberModal(); });
 document.getElementById('memberPaymentOverlay').addEventListener('click', e=>{ if(e.target.id==='memberPaymentOverlay') closeMemberPaymentModal(); });
+
+/* ============ PWA: SERVICE WORKER + ANA EKRANA EKLE ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+});
+
+function isStandaloneApp(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+}
+
+async function installApp(){
+  if(isStandaloneApp()){
+    toast('Uygulama zaten ana ekrana eklenmiş görünüyor');
+    return;
+  }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if(outcome==='accepted') toast('Uygulama ana ekrana eklendi');
+    deferredInstallPrompt = null;
+    return;
+  }
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints>1);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  if(isIOS && isSafari){
+    alert('Ana Ekrana Eklemek İçin:\n\n1) Alt/üst menüdeki Paylaş (kare + ok) simgesine dokunun\n2) "Ana Ekrana Ekle" seçeneğini seçin\n3) "Ekle" ye dokunun');
+  }else if(isIOS){
+    alert('Bu tarayıcıda otomatik kurulum desteklenmiyor.\n\nSafari ile açıp Paylaş simgesinden "Ana Ekrana Ekle" seçeneğini kullanabilirsiniz.');
+  }else{
+    alert('Uygulamayı Yüklemek İçin:\n\nTarayıcınızın adres çubuğundaki kurulum simgesine tıklayın veya tarayıcı menüsünden (⋮ / ...) "Uygulamayı Yükle" ya da "Ana ekrana ekle" seçeneğini kullanın.');
+  }
+}
+
+window.addEventListener('appinstalled', ()=>{
+  deferredInstallPrompt = null;
+});
 
 /* ============ START ============ */
 setPeriod('daily');
