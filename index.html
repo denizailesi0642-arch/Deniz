@@ -1927,6 +1927,20 @@ function saveDriveClientId(){
   toast('Client ID kaydedildi');
 }
 
+function driveOAuthErrorMessage(resp){
+  const code = resp && (resp.error || resp.type || '');
+  const desc = resp && (resp.error_description || resp.message || '');
+  console.error('Google OAuth error:', resp);
+  if(code === 'popup_failed_to_open') return 'Google giriş penceresi açılamadı. Tarayıcı açılır pencereleri engelliyor olabilir.';
+  if(code === 'popup_closed') return 'Google giriş penceresi kapatıldı.';
+  if(code === 'access_denied') return 'Google Drive erişimine izin verilmedi.';
+  if(code === 'origin_mismatch') return 'Google Cloud ayarlarında bu sitenin adresi yetkili değil. Authorized JavaScript origins kontrol edin.';
+  if(code === 'invalid_client') return "Client ID geçersiz. Google Cloud Client ID'yi kontrol edin.";
+  if(desc) return 'Google OAuth: ' + desc;
+  if(code) return 'Google OAuth hatası: ' + code;
+  return 'Google Drive bağlantısı kurulamadı.';
+}
+
 function initGoogleAuthIfPossible(){
   if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2) return false;
   const clientId = STATE.settings.driveClientId;
@@ -1935,7 +1949,10 @@ function initGoogleAuthIfPossible(){
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
     scope: 'https://www.googleapis.com/auth/drive.file',
-    callback: ()=>{}
+    callback: ()=>{},
+    error_callback: (err)=>{
+      toast(driveOAuthErrorMessage(err));
+    }
   });
   return true;
 }
@@ -1943,14 +1960,24 @@ function initGoogleAuthIfPossible(){
 function connectGoogleDrive(){
   const clientId = document.getElementById('driveClientIdInput').value.trim();
   if(!clientId){ toast('Önce Google Client ID girip kaydedin'); return; }
+  if(!/^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(clientId)){
+    toast("Client ID formatı hatalı. Google Cloud'daki Web uygulaması Client ID'yi aynen kopyalayın.");
+    return;
+  }
   STATE.settings.driveClientId = clientId;
+  STATE.settings.driveConnected = false;
+  STATE.settings.driveFolderId = null;
+  STATE.settings.driveFileId = null;
   googleTokenClient = null;
   persistSettings();
   if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2){
-    toast('Google bağlantı kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.');
+    toast('Google bağlantı kütüphanesi henüz yüklenmedi. Sayfayı yenileyip tekrar deneyin.');
     return;
   }
-  if(!initGoogleAuthIfPossible()) return;
+  if(!initGoogleAuthIfPossible()){
+    toast('Google OAuth başlatılamadı. Sayfayı yenileyip tekrar deneyin.');
+    return;
+  }
   googleTokenClient.callback = (resp)=>{
     if(resp && resp.access_token){
       driveAccessToken = resp.access_token;
@@ -1961,10 +1988,15 @@ function connectGoogleDrive(){
       toast('Google Drive bağlantısı kuruldu');
       performDriveBackup(true);
     }else{
-      toast('Google Drive bağlantısı kurulamadı veya reddedildi');
+      toast(driveOAuthErrorMessage(resp));
     }
   };
-  googleTokenClient.requestAccessToken({ prompt:'consent' });
+  try{
+    googleTokenClient.requestAccessToken({ prompt:'consent' });
+  }catch(err){
+    console.error('Google OAuth start error:', err);
+    toast('Google bağlantısı başlatılamadı: ' + (err.message || err));
+  }
 }
 
 function disconnectGoogleDrive(){
@@ -2000,7 +2032,13 @@ async function driveApiFetch(url, options){
   options = options || {};
   options.headers = Object.assign({}, options.headers, { Authorization: 'Bearer ' + token });
   const res = await fetch(url, options);
-  if(res.status===401){ driveAccessToken = null; throw new Error('drive-unauthorized'); }
+  if(res.status===401){
+    driveAccessToken = null;
+    STATE.settings.driveConnected = false;
+    await persistSettings();
+    renderDriveBackupUI();
+    throw new Error('drive-unauthorized');
+  }
   return res;
 }
 
@@ -2071,7 +2109,12 @@ async function performDriveBackup(manualTrigger){
       headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
       body
     });
-    if(!res.ok) throw new Error('drive upload failed: ' + res.status);
+    if(!res.ok){
+      let detail = '';
+      try{ detail = await res.text(); }catch(e){}
+      console.error('Drive upload response:', res.status, detail);
+      throw new Error('drive upload failed: ' + res.status + (detail ? ' ' + detail.slice(0,300) : ''));
+    }
     const data = await res.json();
     if(!fileId) STATE.settings.driveFileId = data.id;
     STATE.settings.driveLastBackup = Date.now();
