@@ -651,7 +651,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <button class="btn btn-ghost btn-sm" id="driveBackupNowBtn" style="display:none;" onclick="performDriveBackup(true)">Şimdi Yedekle</button>
           <button class="btn btn-ghost btn-sm" id="driveRestoreBtn" style="display:none;color:var(--coral-deep);" onclick="restoreFromDrive()">Yedekten Geri Yükle</button>
         </div>
-        <div class="warn-box" style="margin-top:10px;">GitHub Pages için Google Cloud → Authorized JavaScript origins alanına yalnızca <strong>https://KULLANICI.github.io</strong> yazın (repo yolu yazılmaz). Bağlandıktan sonra hareketler, üyeler, ayarlar ve belgeler Drive'daki "Deniz Ailesi Derneği Yedekleri" klasöründe tutulur; sayfa açılınca senkron denenir. Tarayıcı jetonu saklamadığı için her oturumda bir kez "Senkronize et" gerekebilir.</div>
+        <div class="warn-box" style="margin-top:10px;">Google Cloud → Authorized JavaScript origins alanına yalnızca <strong>https://denizailesi0642-arch.github.io</strong> yazın. <code>/Deniz/</code> yolunu yazmayın. Bağlandıktan sonra hareketler, üyeler, ayarlar ve belgeler Drive'daki "Deniz Ailesi Derneği Yedekleri" klasöründe tutulur; sayfa açılınca senkron denenir. Tarayıcı jetonu saklamadığı için her oturumda bir kez "Senkronize et" gerekebilir.</div>
       </div>
 
       <div class="glass card">
@@ -1991,7 +1991,7 @@ function driveOAuthErrorMessage(resp){
   if(code === 'popup_failed_to_open') return 'Google giriş penceresi açılamadı. Tarayıcı açılır pencereleri engelliyor olabilir.';
   if(code === 'popup_closed') return 'Google giriş penceresi kapatıldı.';
   if(code === 'access_denied') return 'Google Drive erişimine izin verilmedi.';
-  if(code === 'origin_mismatch') return 'Google Cloud ayarlarında bu sitenin adresi yetkili değil. GitHub Pages için origin: https://KULLANICI.github.io (yol yazmayın).';
+  if(code === 'origin_mismatch') return 'Google Cloud ayarlarında bu sitenin adresi yetkili değil. Origin olarak yalnızca https://denizailesi0642-arch.github.io ekleyin (/Deniz yazmayın).';
   if(code === 'invalid_client') return "Client ID geçersiz. Google Cloud Client ID'yi kontrol edin.";
   if(desc) return 'Google OAuth: ' + desc;
   if(code) return 'Google OAuth hatası: ' + code;
