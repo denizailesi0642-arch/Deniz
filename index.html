@@ -633,7 +633,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
         <div class="card-title"><span>Google Drive Depolama</span></div>
         <div class="field">
           <label>Google OAuth Client ID</label>
-          <input type="text" id="driveClientIdInput" placeholder="xxxxxxxxxx-xxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <input type="text" id="driveClientIdInput" placeholder="xxxxxxxxxx-xxxx.apps.googleusercontent.com">
         </div>
         <button class="btn btn-ghost btn-sm" onclick="saveDriveClientId()" style="margin-bottom:6px;">Client ID'yi Kaydet</button>
         <div class="settings-item">
@@ -652,11 +652,12 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <button class="btn btn-ghost btn-sm" id="driveRestoreBtn" style="display:none;color:var(--coral-deep);" onclick="restoreFromDrive()">Yedekten Geri Yükle</button>
         </div>
         <div class="warn-box" style="margin-top:10px;">
-          Drive hesabı: <strong>denizailesi0642@gmail.com</strong> olmalıdır. Telefonda başka bir Gmail seçmeyin.<br>
-          Telefonda <strong>Samsung İnternet kullanmayın</strong> — Google “401: invalid_client” verebilir. Siteyi <strong>Chrome</strong> ile açın.<br>
-          Client ID'yi yazmayın; PC'den kopyalayıp yapıştırın.<br>
-          Google Cloud origin: <code>https://denizailesi0642-arch.github.io</code><br>
-          OAuth test kullanıcısı olarak da <strong>denizailesi0642@gmail.com</strong> ekleyin.
+          <strong>Authorized JavaScript origins:</strong> <code>https://denizailesi0642-arch.github.io</code><br>
+          <strong>Authorized redirect URIs</strong> (mobil için zorunlu; üçünü de ekleyin):<br>
+          <code>https://denizailesi0642-arch.github.io/Deniz/</code><br>
+          <code>https://denizailesi0642-arch.github.io/Deniz</code><br>
+          <code>https://denizailesi0642-arch.github.io/Deniz/index.html</code><br>
+          Telefonda WhatsApp/Instagram içi tarayıcı kullanmayın; Chrome veya Safari ile açın. Ana ekrana ekli uygulamada Google penceresi açılmazsa siteden tarayıcıyla açın. Mobilde PC'deki <strong>aynı Client ID</strong>'yi kaydedip <strong>Bağlan</strong> deyin; açılır pencereye izin verin.
         </div>
       </div>
 
@@ -667,7 +668,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <div class="settings-text"><strong>Tüm Hareketleri Temizle</strong><span>Bu işlem geri alınamaz</span></div>
           <button class="btn btn-ghost btn-sm" onclick="clearAllData()" style="color:var(--coral-deep);">Temizle</button>
         </div>
-        <div class="warn-box">Veriler önce bu tarayıcıya yazılır; Google Drive bağlıysa <strong>denizailesi0642@gmail.com</strong> hesabındaki klasöre kaydedilir. Telefonda bu hesabı seçin; başka Gmail seçerseniz veriler görünmez. İki kişi aynı anda kaydederse son yazılan yedek geçerli olur. Tarayıcı verisi silinirse Drive'dan geri yükleyebilirsiniz.</div>
+        <div class="warn-box">Veriler önce bu tarayıcıya yazılır; Google Drive bağlıysa aynı anda Drive'a da kaydedilir. Yeni bir cihazda Client ID'yi girip aynı Google hesabıyla senkron edin. İki kişi aynı anda kaydederse son yazılan yedek geçerli olur. Tarayıcı verisi silinirse Drive'dan geri yükleyebilirsiniz.</div>
       </div>
     </section>
 
@@ -841,8 +842,6 @@ const KEYS = { TX:'deniz-tx-list', SETTINGS:'deniz-settings', RATES:'deniz-rates
 const DRIVE_FOLDER_NAME = 'Deniz Ailesi Derneği Yedekleri';
 const DRIVE_FILE_NAME = 'deniz-dernek-yedek.json';
 const FILE_KEY_PREFIX = 'deniz-file-';
-const DRIVE_GOOGLE_ACCOUNT = 'denizailesi0642@gmail.com';
-const DRIVE_OAUTH_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 const CATS_GELIR = ['Üyelik Aidatı','Bağış','Etkinlik Geliri','Sponsorluk','Diğer Gelir'];
 const CATS_GIDER = ['Kira','Fatura','Etkinlik Gideri','Malzeme/Demirbaş','Yardım/Bağış Gideri','Ulaşım','Diğer Gider'];
 const NAV_ITEMS = [
@@ -944,9 +943,7 @@ async function init(){
   }
   document.getElementById('driveClientIdInput').value = STATE.settings.driveClientId || '';
   renderDriveBackupUI();
-  const blocked = googleAuthBrowserBlockReason();
-  if(blocked) showDriveSyncBar(blocked, 'warn', false);
-  else await attemptDriveSessionSync();
+  await attemptDriveSessionSync();
 }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -1994,14 +1991,8 @@ function isInAppBrowser(){
   const ua = navigator.userAgent || '';
   return /FBAN|FBAV|Instagram|Line\/|WhatsApp|Twitter|Snapchat|TikTok/i.test(ua);
 }
-function isSamsungInternet(){
-  return /SamsungBrowser/i.test(navigator.userAgent || '');
-}
-function googleAuthBrowserBlockReason(){
-  if(isInAppBrowser()) return 'WhatsApp/Instagram içi tarayıcıda Google girişi çalışmaz. Sayfayı Chrome ile açın.';
-  if(isSamsungInternet()) return 'Samsung İnternet Google Client ID\'yi bozuyor (401 invalid_client). Google Chrome uygulamasıyla açıp tekrar Bağlan deyin.';
-  if(isStandalonePwa()) return 'Ana ekran uygulamasında Google penceresi açılmayabilir. Chrome veya Safari sekmesinde açın.';
-  return '';
+function isStandalonePwa(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
 }
 function normalizeDriveClientId(id){
   return String(id||'').replace(/\s+/g,'').trim();
@@ -2022,7 +2013,7 @@ function driveOAuthErrorMessage(resp){
   console.error('Google OAuth error:', resp);
   if(code === 'popup_failed_to_open') return 'Google giriş penceresi açılamadı. Tarayıcı açılır pencereleri engelliyor olabilir.';
   if(code === 'popup_closed') return 'Google giriş penceresi kapatıldı.';
-  if(code === 'access_denied') return 'Google Drive erişimine izin verilmedi. Google Cloud test kullanıcısı olarak ' + DRIVE_GOOGLE_ACCOUNT + ' ekli olmalı.';
+  if(code === 'access_denied') return 'Google Drive erişimine izin verilmedi.';
   if(code === 'origin_mismatch' || code === 'redirect_uri_mismatch') return 'Google Cloud\'da JavaScript origin (https://denizailesi0642-arch.github.io) ve redirect URI (https://denizailesi0642-arch.github.io/Deniz/) eksik olabilir.';
   if(code === 'invalid_client') return 'Google bu giriş yöntemini reddetti. Telefonda sayfayı yenileyip Chrome/Safari ile tekrar Bağlan deyin; Client ID Web uygulaması olmalı.';
   if(desc) return 'Google OAuth: ' + desc;
@@ -2036,8 +2027,7 @@ function initGoogleAuthIfPossible(){
   if(!clientId) return false;
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: DRIVE_OAUTH_SCOPES,
-    hint: DRIVE_GOOGLE_ACCOUNT,
+    scope: 'https://www.googleapis.com/auth/drive.file',
     include_granted_scopes: true,
     callback: ()=>{},
     error_callback: ()=>{}
@@ -2045,37 +2035,9 @@ function initGoogleAuthIfPossible(){
   return true;
 }
 
-async function assertExpectedGoogleAccount(token){
-  try{
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if(!res.ok) return true;
-    const profile = await res.json();
-    const email = String(profile.email || '').trim().toLowerCase();
-    if(!email) return true;
-    if(email !== DRIVE_GOOGLE_ACCOUNT){
-      driveAccessToken = null;
-      driveAccessTokenExpiry = 0;
-      STATE.settings.driveConnected = false;
-      await persistSettings();
-      renderDriveBackupUI();
-      const msg = 'Yanlış Google hesabı (' + email + '). ' + DRIVE_GOOGLE_ACCOUNT + ' ile giriş yapın.';
-      showDriveSyncBar(msg, 'err', true);
-      toast(msg);
-      return false;
-    }
-    return true;
-  }catch(e){
-    return true;
-  }
-}
-
 async function onDriveTokenReceived(token, expiresIn, manual){
   driveAccessToken = token;
   driveAccessTokenExpiry = Date.now() + ((expiresIn||3600)*1000) - 60000;
-  const okAccount = await assertExpectedGoogleAccount(token);
-  if(!okAccount) return;
   STATE.settings.driveConnected = true;
   await persistSettings();
   renderDriveBackupUI();
@@ -2084,7 +2046,7 @@ async function onDriveTokenReceived(token, expiresIn, manual){
   try{
     await syncDriveStorage({ manual: !!manual });
     hideDriveSyncBar();
-    if(manual) toast('Google Drive depolaması hazır (' + DRIVE_GOOGLE_ACCOUNT + ')');
+    if(manual) toast('Google Drive depolaması hazır');
   }catch(err){
     console.error(err);
     showDriveSyncBar('Drive senkronu başarısız. İnterneti kontrol edip tekrar deneyin.', 'err', true);
@@ -2101,11 +2063,12 @@ function connectGoogleDrive(){
   }
   STATE.settings.driveClientId = clientId;
   persistSettings();
-  const blocked = googleAuthBrowserBlockReason();
-  if(blocked){
-    showDriveSyncBar(blocked, 'err', false);
-    toast(blocked);
+  if(isInAppBrowser()){
+    toast('WhatsApp/Instagram içi tarayıcıda Google girişi çalışmaz. Sayfayı Chrome veya Safari ile açın.');
     return;
+  }
+  if(isStandalonePwa()){
+    toast('Ana ekran uygulamasında Google penceresi açılmayabilir. Siteyi Chrome veya Safari sekmesinde açıp Bağlan deyin.');
   }
   if(typeof google==='undefined' || !google.accounts || !google.accounts.oauth2){
     toast('Google kütüphanesi henüz yüklenmedi. 2 saniye bekleyip Bağlan\'a tekrar dokunun.');
@@ -2126,7 +2089,7 @@ function connectGoogleDrive(){
     }
   };
   try{
-    googleTokenClient.requestAccessToken({ prompt: 'select_account', hint: DRIVE_GOOGLE_ACCOUNT });
+    googleTokenClient.requestAccessToken({ prompt: 'consent' });
   }catch(err){
     console.error('Google OAuth start error:', err);
     toast('Google bağlantısı başlatılamadı: ' + (err.message || err));
@@ -2145,7 +2108,10 @@ function disconnectGoogleDrive(){
 
 function getDriveAccessToken(interactive){
   if(driveAccessToken && Date.now() < driveAccessTokenExpiry) return Promise.resolve(driveAccessToken);
-  if(!interactive) return Promise.resolve(null);
+  /* Not: interactive=false olduğunda burada erken "null" döndürmüyoruz — aksi halde sessiz
+     (prompt:'') jeton yenileme HİÇ denenmeden pes edilir ve her sayfa yenilemesinde/otomatik
+     yedeklemede kullanıcı manuel olarak yeniden bağlanmak zorunda kalır (senkron kopar). */
+  if(!STATE.settings.driveConnected) return Promise.resolve(null);
   if(!initGoogleAuthIfPossible()) return Promise.resolve(null);
   return new Promise((resolve)=>{
     let settled = false;
@@ -2358,18 +2324,30 @@ async function syncDriveStorage(opts){
 
 async function attemptDriveSessionSync(){
   if(!STATE.settings.driveConnected || !STATE.settings.driveClientId) return;
-  if(driveAccessToken && Date.now() < driveAccessTokenExpiry){
-    showDriveSyncBar('Google Drive ile senkronize ediliyor…', 'ok', false);
-    try{
-      await syncDriveStorage({ manual:false });
-      hideDriveSyncBar();
-    }catch(err){
-      console.error('drive session sync', err);
-      showDriveSyncBar('Drive senkronu yapılamadı. Tekrar bağlanmayı deneyin.', 'err', true);
-    }
+  /* Sayfa yeni yüklendiğinde driveAccessToken her zaman boştur (bellek içi bir değişkendir,
+     sayfalar arası saklanmaz). Önceden burada sadece bu boş jetona bakılıp doğrudan "yeniden
+     bağlan" uyarısı gösteriliyordu — sessiz jeton yenileme HİÇ denenmiyordu. Şimdi önce Google
+     kütüphanesinin yüklenmesini bekleyip gerçek bir sessiz (prompt yok) jeton denemesi yapıyoruz;
+     kullanıcının Google oturumu hâlâ açık ve izin daha önce verilmişse bu, popup göstermeden
+     otomatik olarak senkronu tamamlar. */
+  showDriveSyncBar('Google Drive ile senkronize ediliyor…', 'ok', false);
+  const ready = await waitForGoogleIdentity(4000);
+  if(!ready){
+    showDriveSyncBar('Google bağlantı kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.', 'warn', true);
     return;
   }
-  showDriveSyncBar('Drive oturumu için Bağlan / Senkronize et deyin. Chrome veya Safari kullanın.', 'warn', true);
+  try{
+    const token = await getDriveAccessToken(false);
+    if(!token){
+      showDriveSyncBar('Drive oturumu için Bağlan / Senkronize et deyin. Chrome veya Safari kullanın.', 'warn', true);
+      return;
+    }
+    await syncDriveStorage({ manual:false });
+    hideDriveSyncBar();
+  }catch(err){
+    console.error('drive session sync', err);
+    showDriveSyncBar('Drive senkronu yapılamadı. Tekrar bağlanmayı deneyin.', 'err', true);
+  }
 }
 
 function scheduleDriveBackup(){
@@ -2484,7 +2462,7 @@ document.getElementById('memberOverlay').addEventListener('click', e=>{ if(e.tar
 document.getElementById('memberPaymentOverlay').addEventListener('click', e=>{ if(e.target.id==='memberPaymentOverlay') closeMemberPaymentModal(); });
 
 /* ============ PWA: SERVICE WORKER + ANA EKRANA EKLE ============ */
-if('serviceWorker' in navigator && !/SamsungBrowser/i.test(navigator.userAgent||'')){
+if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
