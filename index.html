@@ -545,6 +545,45 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       </div>
     </section>
 
+    <!-- SINGLE MEMBER DETAIL PRINT (yalnızca yazdırma/PDF içindir; normalde gizlidir) -->
+    <section class="page" id="page-uye-detay">
+      <div class="glass card print-header">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="57" fill="#0b3654"/>
+          <circle cx="85" cy="35" r="9" fill="#ff5a45"/>
+          <path d="M8 64 Q28 48 48 64 T88 64 T128 64" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h2 id="printMemberDetailOrgName">Deniz Ailesi Derneği</h2>
+          <div style="font-size:12px;color:#456;">Üye Detayı · <span id="printMemberDetailDate"></span></div>
+        </div>
+      </div>
+      <div class="glass card" style="padding:14px;">
+        <div class="field-row">
+          <div class="field"><label>Ad Soyad</label><div id="printMemberDetailName" style="font-weight:700;"></div></div>
+          <div class="field"><label>Baba Adı</label><div id="printMemberDetailFather"></div></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Telefon</label><div id="printMemberDetailPhone"></div></div>
+          <div class="field"><label>Üyelik Tarihi</label><div id="printMemberDetailJoin"></div></div>
+        </div>
+        <div class="field"><label>Adres</label><div id="printMemberDetailAddress"></div></div>
+        <div class="field"><label>Not</label><div id="printMemberDetailNote"></div></div>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin:12px 0;">
+        <div class="glass stat-card income"><small>Toplam Ödediği</small><strong class="num" id="printMemberDetailTotalIn"></strong></div>
+        <div class="glass stat-card"><small>Hareket Sayısı</small><strong class="num" id="printMemberDetailCount"></strong></div>
+      </div>
+      <div class="glass card" style="padding:10px 14px;">
+        <div class="table-wrap">
+          <table class="tx-table">
+            <thead><tr><th>Tarih</th><th>Kategori</th><th>Açıklama</th><th>Tür</th><th style="text-align:right;">Tutar</th></tr></thead>
+            <tbody id="printMemberDetailTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- REPORTS -->
     <section class="page" id="page-raporlar">
       <div class="glass card print-header">
@@ -802,7 +841,12 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
     <div class="glass card" id="memberDuesSection" style="display:none;padding:14px;margin:4px 0 14px;">
       <div class="card-title">
         <span>Aidat / Ödemeler</span>
-        <button type="button" class="btn btn-coral btn-sm" onclick="openMemberPaymentModal()">+ Ödeme Ekle</button>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="printMemberDetail()" title="Üye Detayını Yazdır / PDF">
+            <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+          </button>
+          <button type="button" class="btn btn-coral btn-sm" onclick="openMemberPaymentModal()">+ Ödeme Ekle</button>
+        </div>
       </div>
       <div id="memberDuesSummary" style="margin-bottom:6px;"></div>
       <div id="memberDuesList"></div>
@@ -1493,9 +1537,15 @@ async function saveTransaction(){
      iki üye olsa bile birbirine karışmaz). Eşleşme yoksa (serbest/elle girilen bir isim,
      ya da hiç isim girilmemiş) alan tamamen serbest metin olarak kalır - üye zorunlu değildir. */
   const enteredPersonName = document.getElementById('txPerson').value.trim();
-  const matchedMember = findMemberByName(enteredPersonName);
+  const matchedMember = findMemberByPersonField(enteredPersonName);
   if(matchedMember){
     record.memberId = matchedMember.id;
+  }else if(enteredPersonName && findMembersByName(enteredPersonName).length>1){
+    /* Bu isimde birden fazla üye var ve hangisi olduğu belli değil; ödemeyi yanlış üyeye
+       bağlamamak için memberId ATANMAZ. Kullanıcı, ilgili üyenin baba adıyla birlikte listeden
+       seçmesi (Ad Soyad — Baba Adı) ya da üyenin kendi profilinden "+ Ödeme Ekle" yapması
+       durumunda ödeme doğru üyeyle eşsiz şekilde eşleşir. */
+    toast('Bu isimde birden fazla üye var. Karışmaması için listeden "Ad Soyad — Baba Adı" seçeneğini seçin veya üyenin profilinden ödeme ekleyin.');
   }
 
   if(STATE.currentAttachment){
@@ -1750,10 +1800,39 @@ function getReportRange(){
 /* Kişi adını üye kaydıyla eşleştirir (rapor çıktısında Baba Adı göstermek için).
    NOT: Aynı ad soyada sahip birden fazla üye varsa bu fonksiyon aralarından ilkini döner;
    bu yüzden elimizde bir memberId varsa her zaman onu tercih ederiz (bkz. resolveMemberForTx). */
-function findMemberByName(name){
+function findMembersByName(name){
   const n = (name||'').toLowerCase().trim();
-  if(!n) return null;
-  return STATE.members.find(m=> (m.adSoyad||'').toLowerCase().trim()===n) || null;
+  if(!n) return [];
+  return STATE.members.filter(m=> (m.adSoyad||'').toLowerCase().trim()===n);
+}
+
+/* Ada göre TEK bir üye bulur. Aynı ad soyada sahip birden fazla üye varsa (belirsiz durum),
+   yanlışlıkla birini seçip ödemeleri birbirine karıştırmamak için null döner. Bu durumda
+   eşleştirme, "Ad Soyad — Baba Adı" birleşik metniyle (bkz. findMemberByPersonField) ya da
+   üyenin kendi profilinden "+ Ödeme Ekle" ile yapılmalıdır. */
+function findMemberByName(name){
+  const matches = findMembersByName(name);
+  return matches.length===1 ? matches[0] : null;
+}
+
+/* Genel Gelir/Gider formundaki "Kişi/Üye" alanı, aynı ad soyada sahip birden fazla üye
+   olduğunda "Ad Soyad — Baba Adı" biçiminde girilebilir (bkz. renderMemberDatalist). Önce bu
+   birleşik biçimi dener; olmazsa düz ada göre TEK eşleşme varsa üyeyi döner, birden fazla
+   eşleşme varsa (belirsizlik) null döner. */
+function findMemberByPersonField(text){
+  const t = (text||'').trim();
+  if(!t) return null;
+  const composite = t.match(/^(.*)\s—\s(.*)$/);
+  if(composite){
+    const nm = composite[1].toLowerCase().trim();
+    const baba = composite[2].toLowerCase().trim();
+    const found = STATE.members.find(m=>
+      (m.adSoyad||'').toLowerCase().trim()===nm &&
+      (m.babaAdi||'').toLowerCase().trim()===(baba==='baba adı belirtilmemiş' ? '' : baba)
+    );
+    if(found) return found;
+  }
+  return findMemberByName(t);
 }
 
 /* Bir işlemi (varsa) kesin olarak doğru üyeyle eşleştirir. Üye ödemesi (aidat) kayıtları
@@ -1818,10 +1897,22 @@ function renderReport(){
     }).join('');
 }
 
-function printReport(){
+/* Sayfayı yazdırma görünümüne geçirir ve tarayıcının yazdırma iletişim kutusunu açar.
+   window.print() çağrısı, içerik DOM'a yazıldıktan hemen sonra değil bir render/paint
+   döngüsü bekledikten sonra yapılır; aksi halde bazı tarayıcılarda (özellikle mobil
+   Safari/WebView) henüz boyanmamış yeni içerik yakalanamadığından çıktı boş çıkabiliyor. */
+function triggerPrint(pageId){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
-  document.getElementById('page-raporlar').classList.add('print-active');
-  window.print();
+  document.getElementById(pageId).classList.add('print-active');
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      window.print();
+    });
+  });
+}
+
+function printReport(){
+  triggerPrint('page-raporlar');
 }
 
 /* ============ EXCEL ============ */
@@ -1919,10 +2010,26 @@ function handleImportExcel(ev){
 }
 
 /* ============ MEMBERS (ÜYELER) ============ */
+/* Aynı ad soyada sahip birden fazla üye varsa, bu isimler için otomatik tamamlama listesinde
+   "Ad Soyad — Baba Adı" biçimini öneririz; böylece kullanıcı hangi üyeyi kastettiğini net
+   şekilde seçebilir ve ödeme yanlış üyeye bağlanmaz (bkz. findMemberByPersonField). Tek üyesi
+   olan isimler eskisi gibi düz ad soyad olarak kalır. */
 function renderMemberDatalist(){
   const dl = document.getElementById('memberNamesList');
   if(!dl) return;
-  dl.innerHTML = STATE.members.map(m=>`<option value="${escapeHtml(m.adSoyad)}">`).join('');
+  const nameCounts = {};
+  STATE.members.forEach(m=>{
+    const key = (m.adSoyad||'').toLowerCase().trim();
+    if(!key) return;
+    nameCounts[key] = (nameCounts[key]||0) + 1;
+  });
+  dl.innerHTML = STATE.members.map(m=>{
+    const key = (m.adSoyad||'').toLowerCase().trim();
+    const label = (key && nameCounts[key] > 1)
+      ? `${m.adSoyad} — ${m.babaAdi ? m.babaAdi : 'baba adı belirtilmemiş'}`
+      : (m.adSoyad||'');
+    return `<option value="${escapeHtml(label)}">`;
+  }).join('');
 }
 
 /* Bir üyenin tüm "Üyelik Aidatı" ödemelerinin listesi (tarihe göre azalan).
@@ -1933,11 +2040,15 @@ function renderMemberDatalist(){
 function getMemberDuesList(member){
   const name = (member.adSoyad||'').toLowerCase().trim();
   if(name==='' && !member.id) return [];
+  /* Aynı ad soyada sahip başka üye(ler) varsa, memberId taşımayan eski/serbest kayıtları isme
+     bakarak eşleştirmeyiz - aksi halde aynı kayıt birden fazla üyenin altında görünüp ödemeler
+     birbirine karışır. Böyle durumlarda sadece memberId ile kesin eşleşen kayıtlar sayılır. */
+  const nameIsUnique = name!=='' && findMembersByName(member.adSoyad).length===1;
   return STATE.tx
     .filter(t=>{
       if(t.type!=='gelir' || t.category!=='Üyelik Aidatı') return false;
       if(t.memberId) return t.memberId === member.id;
-      return name!=='' && (t.person||'').toLowerCase().trim()===name;
+      return nameIsUnique && (t.person||'').toLowerCase().trim()===name;
     })
     .sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
 }
@@ -1956,31 +2067,53 @@ function computeMemberDues(member){
   return { total, paidThisMonth, lastDate };
 }
 
-/* Üye modalı içindeki Aidat/Ödemeler bölümünü çizer */
+/* Bir üyenin adına kayıtlı TÜM hareketler (sadece "Üyelik Aidatı" değil, o üyeyle
+   ilişkilendirilmiş her gelir/gider kaydı). Önce üyenin benzersiz kimliğine (memberId)
+   göre eşleştirilir; memberId taşımayan eski/manuel kayıtlarda isimle eşleştirmeye
+   geri düşülür (bkz. resolveMemberForTx). */
+function getMemberAllPayments(member){
+  const name = (member.adSoyad||'').toLowerCase().trim();
+  if(name==='' && !member.id) return [];
+  /* Ad soyad başka üye(ler)de de aynıysa, memberId taşımayan kayıtları isme göre eşleştirmeyiz
+     (bkz. getMemberDuesList'teki aynı gerekçe) - böylece bir ödeme iki üyenin altında birden
+     görünmez. */
+  const nameIsUnique = name!=='' && findMembersByName(member.adSoyad).length===1;
+  return STATE.tx
+    .filter(t=>{
+      if(t.memberId) return t.memberId === member.id;
+      return nameIsUnique && (t.person||'').toLowerCase().trim()===name;
+    })
+    .sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
+}
+
+/* Üye modalı içindeki Aidat/Ödemeler bölümünü çizer: üyenin bilgileriyle birlikte
+   ödediği (ve varsa kendisine ödenen) TÜM hareketleri listeler. */
 function renderMemberDuesSection(memberId){
   const m = STATE.members.find(x=>x.id===memberId);
   const summaryEl = document.getElementById('memberDuesSummary');
   const listEl = document.getElementById('memberDuesList');
   if(!m || !summaryEl || !listEl) return;
-  const dues = getMemberDuesList(m);
-  const total = dues.reduce((s,t)=>s+txTRY(t),0);
-  summaryEl.innerHTML = `
-    <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);">
-      <div class="glass stat-card income"><small>Toplam Ödenen Aidat</small><strong class="num">${fmtMoney(total)}</strong></div>
-      <div class="glass stat-card"><small>Ödeme Sayısı</small><strong class="num">${dues.length}</strong></div>
-    </div>`;
-  if(dues.length===0){
+  const payments = getMemberAllPayments(m);
+  const totalIn = payments.filter(t=>t.type==='gelir').reduce((s,t)=>s+txTRY(t),0);
+  const totalOut = payments.filter(t=>t.type==='gider').reduce((s,t)=>s+txTRY(t),0);
+  const cards = [
+    `<div class="glass stat-card income"><small>Toplam Ödediği</small><strong class="num">${fmtMoney(totalIn)}</strong></div>`,
+    `<div class="glass stat-card"><small>Hareket Sayısı</small><strong class="num">${payments.length}</strong></div>`
+  ];
+  if(totalOut>0) cards.push(`<div class="glass stat-card expense"><small>Kendisine Ödenen</small><strong class="num">${fmtMoney(totalOut)}</strong></div>`);
+  summaryEl.innerHTML = `<div class="stat-grid" style="grid-template-columns:repeat(${cards.length},1fr);">${cards.join('')}</div>`;
+  if(payments.length===0){
     listEl.innerHTML = `<div class="empty-state" style="padding:14px 6px;">Henüz ödeme kaydı yok</div>`;
     return;
   }
-  listEl.innerHTML = dues.map(t=>`
-    <div class="tx-mini" style="cursor:pointer;" onclick="openTxModal('gelir','${t.id}')">
-      <div class="tx-dot gelir">${iconForCat(t)}</div>
+  listEl.innerHTML = payments.map(t=>`
+    <div class="tx-mini" style="cursor:pointer;" onclick="openTxModal('${t.type}','${t.id}')">
+      <div class="tx-dot ${t.type}">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
-        <span>${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}</span>
+        <span>${escapeHtml(t.category)} · ${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}</span>
       </div>
-      <div class="tx-amt gelir">+${fmtMoney(txTRY(t))}</div>
+      <div class="tx-amt ${t.type}">${t.type==='gider'?'-':'+'}${fmtMoney(txTRY(t))}</div>
     </div>
   `).join('');
 }
@@ -2161,15 +2294,81 @@ function renderMemberPrintTable(){
     </tr>`).join('');
 }
 
+/* Üye listesi ekranda kart görünümüyle (member-list-view), yazdırmada ise ayrı bir
+   tabloyla (member-print-view) gösteriliyor. Bu ikisi arasındaki geçiş yalnızca
+   @media print kuralına ("display:none !important" / "display:block !important")
+   bırakılmıştı; rapor çıktısında böyle bir geçiş yok (rapor tablosu zaten ekranda
+   göründüğü haliyle yazdırılıyor), üye listesinde ise EK bir görünürlük değişimi
+   gerekiyor. Özellikle mobil Safari/WebView'lerde, önceden display:none olan bir
+   öğe sadece yazdırma anındaki CSS kuralıyla görünür yapıldığında, yazdırma motoru
+   bunu bazen henüz uygulanmamış haliyle "yakalıyor" ve çıktı boş çıkıyordu (triggerPrint
+   içindeki çift requestAnimationFrame'in çözdüğü sorunla aynı kökten, ama burada CSS
+   kuralına bırakıldığı için o düzeltme tek başına yetmiyordu). Bunu, rapor çıktısındaki
+   gibi güvenilir hale getirmek için görünürlük geçişini burada JS ile önceden ve kesin
+   olarak yapıyoruz; yazdırma penceresi kapanınca da eski haline döndürüyoruz. */
 function printMembers(){
   if(STATE.members.length===0){ toast('Yazdırılacak üye yok'); return; }
   renderMemberPrintTable();
   document.getElementById('printMemberDate').textContent = formatDateTR(todayStr());
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
-  document.getElementById('page-uyeler').classList.add('print-active');
-  window.print();
+
+  const listView = document.querySelector('#page-uyeler .member-list-view');
+  const printView = document.querySelector('#page-uyeler .member-print-view');
+  const prevListDisplay = listView ? listView.style.display : '';
+  const prevPrintDisplay = printView ? printView.style.display : '';
+  if(listView) listView.style.display = 'none';
+  if(printView) printView.style.display = 'block';
+
+  let restored = false;
+  const restoreMemberViews = ()=>{
+    if(restored) return;
+    restored = true;
+    if(listView) listView.style.display = prevListDisplay;
+    if(printView) printView.style.display = prevPrintDisplay;
+    window.removeEventListener('afterprint', restoreMemberViews);
+  };
+  window.addEventListener('afterprint', restoreMemberViews);
+  /* 'afterprint' bazı eski/mobil WebView'lerde tetiklenmeyebiliyor; bu yüzden
+     yedek olarak bir süre sonra da eski görünüme dönülüyor. */
+  setTimeout(restoreMemberViews, 4000);
+
+  triggerPrint('page-uyeler');
 }
 
+/* Tek bir üyenin bilgilerini ve TÜM ödeme geçmişini (getMemberAllPayments) ayrı bir
+   yazdırma şablonuna doldurup PDF/yazıcı çıktısı olarak sunar. Üye modalındaki
+   "Yazdır/PDF" ikonuna basıldığında çağrılır. */
+function printMemberDetail(){
+  const id = document.getElementById('memberId').value;
+  if(!id){ toast('Önce üyeyi kaydedin'); return; }
+  const m = STATE.members.find(x=>x.id===id);
+  if(!m){ toast('Üye bulunamadı'); return; }
+  const payments = getMemberAllPayments(m);
+  const totalIn = payments.filter(t=>t.type==='gelir').reduce((s,t)=>s+txTRY(t),0);
+
+  document.getElementById('printMemberDetailOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+  document.getElementById('printMemberDetailDate').textContent = formatDateTR(todayStr());
+  document.getElementById('printMemberDetailName').textContent = m.adSoyad || '';
+  document.getElementById('printMemberDetailFather').textContent = m.babaAdi || '-';
+  document.getElementById('printMemberDetailPhone').textContent = m.telefon || '-';
+  document.getElementById('printMemberDetailJoin').textContent = m.uyelikTarihi ? formatDateTR(m.uyelikTarihi) : '-';
+  document.getElementById('printMemberDetailAddress').textContent = m.adres || '-';
+  document.getElementById('printMemberDetailNote').textContent = m.not || '-';
+  document.getElementById('printMemberDetailTotalIn').textContent = fmtMoney(totalIn);
+  document.getElementById('printMemberDetailCount').textContent = payments.length;
+
+  const tbody = document.getElementById('printMemberDetailTableBody');
+  tbody.innerHTML = payments.length===0
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:16px;">Ödeme kaydı yok</td></tr>`
+    : payments.map(t=>`<tr>
+        <td>${formatDateTR(t.date)}</td>
+        <td>${escapeHtml(t.category)}</td>
+        <td>${escapeHtml(t.description||'')}</td>
+        <td>${t.type==='gelir'?'Gelir':'Gider'}</td>
+        <td style="text-align:right;" class="num">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}</td>
+      </tr>`).join('');
+
+  triggerPrint('page-uye-detay');
+}
 function exportMembersExcel(){
   const list = getFilteredSortedMembers();
   if(list.length===0){ toast('Aktarılacak üye yok'); return; }
