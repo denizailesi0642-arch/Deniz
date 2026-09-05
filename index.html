@@ -1457,8 +1457,7 @@ async function saveTransaction(){
   /* Bu kayıt daha önce bir "Üye Ödemesi" modalından memberId ile oluşturulmuşsa (örn. üye
      aidatı), genel Gelir/Gider düzenleme ekranından tekrar kaydedilirken bu bağlantının
      silinmemesi için mevcut kaydı burada saklıyoruz. */
-  const existingTx = STATE.tx.find(t=>t.id===id) || null;
-  const amount = parseFloat(document.getElementById('txAmount').value);
+  const existingTx = STATE.tx.find(t=>t.id===id) || null;  const amount = parseFloat(document.getElementById('txAmount').value);
   const date = document.getElementById('txDate').value;
   const currency = document.getElementById('txCurrency').value;
   if(!date){ toast('Lütfen tarih seçin'); return; }
@@ -1487,6 +1486,17 @@ async function saveTransaction(){
     attachmentName: null
   };
   if(existingTx && existingTx.memberId) record.memberId = existingTx.memberId;
+  /* "Kişi/Üye" alanına girilen isim, kayıtlı bir üyenin adıyla birebir eşleşiyorsa
+     (autocomplete listesinden seçilsin ya da elle aynı şekilde yazılsın fark etmez),
+     ödemeyi doğrudan o üyenin benzersiz kimliğine (memberId) bağlıyoruz. Böylece bu kayıt
+     üyenin aidat geçmişinde ve toplamlarında kesin olarak görünür (aynı ad soyada sahip
+     iki üye olsa bile birbirine karışmaz). Eşleşme yoksa (serbest/elle girilen bir isim,
+     ya da hiç isim girilmemiş) alan tamamen serbest metin olarak kalır - üye zorunlu değildir. */
+  const enteredPersonName = document.getElementById('txPerson').value.trim();
+  const matchedMember = findMemberByName(enteredPersonName);
+  if(matchedMember){
+    record.memberId = matchedMember.id;
+  }
 
   if(STATE.currentAttachment){
     record.attachmentId = STATE.currentAttachment.id;
