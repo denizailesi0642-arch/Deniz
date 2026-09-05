@@ -238,8 +238,21 @@ button,input,select,textarea{font-family:inherit;}
 .type-toggle button.sel-gider{background:rgba(255,90,69,0.14);border-color:var(--coral-deep);color:var(--coral-deep);}
 .file-row{display:flex;gap:8px;flex-wrap:wrap;}
 .file-row .btn-ghost{flex:1;min-width:130px;}
-.file-preview{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:rgba(15,155,142,0.09);border-radius:10px;font-size:12px;}
-.file-preview button{margin-left:auto;background:none;border:none;color:var(--coral-deep);font-weight:700;cursor:pointer;}
+.file-preview{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;background:rgba(15,155,142,0.09);border-radius:10px;font-size:12px;}
+.file-preview button{margin-left:auto;background:none;border:none;color:var(--coral-deep);font-weight:700;cursor:pointer;flex-shrink:0;}
+.file-preview-thumb{
+  width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;
+  border:1px solid rgba(15,155,142,0.25);background:#fff;cursor:pointer;
+}
+.file-preview-icon{
+  width:44px;height:44px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(15,155,142,0.14);color:var(--teal);font-size:10px;font-weight:800;
+  border:1px solid rgba(15,155,142,0.25);cursor:pointer;letter-spacing:.02em;
+}
+.file-preview-info{min-width:0;flex:1;}
+.file-preview-info strong{display:block;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.file-preview-info span{display:block;font-size:10.5px;color:var(--ink-soft);}
 
 /* ---------- search / filters ---------- */
 .search-bar{display:flex;gap:8px;margin-bottom:12px;}
@@ -353,6 +366,15 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
   table.tx-table tr{break-inside:avoid;page-break-inside:avoid;}
   .member-list-view{display:none !important;}
   .member-print-view{display:block !important;}
+  /* Uzun tabloları içeren kartlar (rapor hareketleri / üye listesi) tek parça olarak
+     bir sonraki sayfaya atılmasın diye break-inside burada bilerek "auto"ya çevrilir;
+     aksi halde kart bir önceki sayfaya sığmadığında tamamı sonraki sayfaya kayıyor ve
+     ilk sayfa neredeyse boş kalıp tüm tablo tek başına ikinci sayfayı dolduruyordu.
+     Satırların kendisi (tr) yine yukarıda break-inside:avoid ile korunduğu için satır
+     ortadan bölünmez, sadece tablo doğal şekilde sayfalar arasında akabilir. */
+  .card.report-table-card, .card.member-print-view{
+    break-inside:auto !important;page-break-inside:auto !important;
+  }
 }
 
 /* ---------- desktop layout ---------- */
@@ -572,11 +594,11 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
         <button class="btn btn-primary" onclick="exportReportExcel()"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg> Excel'e Aktar</button>
       </div>
 
-      <div class="glass card">
+      <div class="glass card report-table-card">
         <div class="card-title"><span>Rapor Hareketleri</span></div>
         <div class="table-wrap">
           <table class="tx-table">
-            <thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th><th>Kişi</th><th>Baba Adı</th><th style="text-align:right;">Tutar</th></tr></thead>
+            <thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th><th>Kişi</th><th>Baba Adı</th><th>Ödeme Şekli</th><th style="text-align:right;">Tutar</th></tr></thead>
             <tbody id="repTableBody"></tbody>
           </table>
         </div>
@@ -698,7 +720,20 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       </div>
       <div class="field"><label>TL Karşılığı</label><input type="text" id="txConvertedDisplay" readonly></div>
     </div>
-    <div class="field"><label>Kategori</label><select id="txCategory"></select></div>
+    <div class="field-row">
+      <div class="field"><label>Kategori</label><select id="txCategory"></select></div>
+      <div class="field">
+        <label>Ödeme Şekli</label>
+        <select id="txPaymentMethod">
+          <option value="">Belirtilmedi</option>
+          <option value="Nakit (Elden)">Nakit (Elden)</option>
+          <option value="Havale/EFT">Havale/EFT</option>
+          <option value="Çek">Çek</option>
+          <option value="Senet">Senet</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </div>
+    </div>
     <div class="field"><label>Açıklama</label><input type="text" id="txDesc" placeholder="Örn: Ocak ayı aidatı"></div>
     <div class="field">
       <label>Kişi / Üye</label>
@@ -809,7 +844,34 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       </div>
       <div class="field"><label>TL Karşılığı</label><input type="text" id="memberPaymentConvertedDisplay" readonly></div>
     </div>
-    <div class="field"><label>Açıklama</label><input type="text" id="memberPaymentDesc" placeholder="Örn: Ocak ayı aidatı"></div>
+    <div class="field-row">
+      <div class="field"><label>Açıklama</label><input type="text" id="memberPaymentDesc" placeholder="Örn: Ocak ayı aidatı"></div>
+      <div class="field">
+        <label>Ödeme Şekli</label>
+        <select id="memberPaymentMethod">
+          <option value="">Belirtilmedi</option>
+          <option value="Nakit (Elden)">Nakit (Elden)</option>
+          <option value="Havale/EFT">Havale/EFT</option>
+          <option value="Çek">Çek</option>
+          <option value="Senet">Senet</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Belge / Dekont</label>
+      <div class="file-row">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('memberPaymentFileInput').click()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Dosya Ekle
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('memberPaymentScanInput').click()">
+          <svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 011-1h3M20 8V5a1 1 0 00-1-1h-3M4 16v3a1 1 0 001 1h3M20 16v3a1 1 0 01-1 1h-3M7 12h10"/></svg> Tara (Kamera)
+        </button>
+      </div>
+      <input type="file" id="memberPaymentFileInput" style="display:none;" accept="image/*,.pdf" onchange="handleMemberPaymentFile(event)">
+      <input type="file" id="memberPaymentScanInput" style="display:none;" accept="image/*" capture="environment" onchange="handleMemberPaymentFile(event)">
+      <div id="memberPaymentFilePreview"></div>
+    </div>
     <div class="warn-box" style="margin-top:0;margin-bottom:12px;">Bu ödeme otomatik olarak <strong>"Üyelik Aidatı"</strong> kategorisiyle gelir kaydına eklenir.</div>
     <button class="btn btn-primary btn-block" onclick="saveMemberPayment()">Ödemeyi Kaydet ve Gelire Ekle</button>
   </div>
@@ -852,6 +914,7 @@ let STATE = {
   page: 'dashboard',
   currentTxType: 'gelir',
   currentAttachment: null,
+  currentMemberPaymentAttachment: null,
   typeFilter: 'all',
   catFilter: 'all',
   memberStatusFilter: 'all',
@@ -898,6 +961,34 @@ async function persistMembers(){
 
 function genId(){ return 'tx_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
+/* ============ GEÇİŞ: ESKİ ÜYE ÖDEMELERİNİ memberId İLE ETİKETLE ============
+   Bu düzeltmeden önce üye ödemeleri sadece ad soyad metniyle eşleştiriliyordu. Bu yüzden
+   aynı ad soyada sahip (ör. baba adları farklı) iki üye varsa, birine girilen ödeme
+   diğerinin de "ödedi" görünmesine yol açıyordu. Bu fonksiyon, ad soyadı üyeler arasında
+   TEK (eşsiz) olan geçmiş "Üyelik Aidatı" kayıtlarına ilgili üyenin kimliğini ekler; böylece
+   bu kayıtlar da bundan sonra sadece doğru üyeyle eşleşir. Ad soyadı birden fazla üyede aynıysa
+   (hangisine ait olduğu veriden anlaşılamadığından) o kayıtlara dokunulmaz ve mevcut isim
+   eşleştirmesiyle gösterilmeye devam eder; bu durumdaki geçmiş kayıtların doğru üyeye ait
+   olduğundan emin olmak için ilgili ödemeleri açıp kontrol etmenizi/yeniden kaydetmenizi öneririz. */
+function migrateMemberPaymentLinks(){
+  if(!STATE.tx.length || !STATE.members.length) return;
+  const nameCounts = {};
+  STATE.members.forEach(m=>{
+    const n = (m.adSoyad||'').toLowerCase().trim();
+    if(!n) return;
+    nameCounts[n] = (nameCounts[n]||0) + 1;
+  });
+  let changed = false;
+  STATE.tx.forEach(t=>{
+    if(t.memberId || t.type!=='gelir' || t.category!=='Üyelik Aidatı') return;
+    const n = (t.person||'').toLowerCase().trim();
+    if(!n || nameCounts[n]!==1) return;
+    const m = STATE.members.find(x=> (x.adSoyad||'').toLowerCase().trim()===n);
+    if(m){ t.memberId = m.id; changed = true; }
+  });
+  if(changed) persistTx();
+}
+
 /* ============ INIT ============ */
 async function init(){
   buildNav();
@@ -923,6 +1014,8 @@ async function init(){
 
   const rawRates = await safeGet(KEYS.RATES, true);
   if(rawRates){ STATE.rates = JSON.parse(rawRates); }
+
+  migrateMemberPaymentLinks();
 
   renderAll();
   renderRates();
@@ -1046,7 +1139,7 @@ function renderRecentTx(){
       <div class="tx-dot ${t.type}">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
-        <span>${escapeHtml(t.category)} · ${formatDateTR(t.date)}${currencyNote(t)}</span>
+        <span>${escapeHtml(t.category)} · ${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}</span>
       </div>
       <div class="tx-amt ${t.type}">${t.type==='gider'?'-':'+'}${fmtMoney(txTRY(t))}</div>
     </div>
@@ -1059,6 +1152,11 @@ function currencyNote(t){
     return ` · ${Number(t.amount).toLocaleString('tr-TR')} ${label}`;
   }
   return '';
+}
+
+/* Ödeme şekli (Havale/EFT, Elden, Çek, Senet vb.) belirtilmişse listelerde küçük ek not olarak gösterir */
+function paymentMethodNote(t){
+  return t.paymentMethod ? ` · ${escapeHtml(t.paymentMethod)}` : '';
 }
 
 function emptyStateHtml(msg){
@@ -1104,6 +1202,7 @@ function renderTxList(){
       (t.description||'').toLowerCase().includes(q) ||
       (t.category||'').toLowerCase().includes(q) ||
       (t.person||'').toLowerCase().includes(q) ||
+      (t.paymentMethod||'').toLowerCase().includes(q) ||
       (t.amount+'').includes(q)
     );
   }
@@ -1118,7 +1217,7 @@ function renderTxList(){
       <div class="tx-dot ${t.type}">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
-        <span>${formatDateTR(t.date)} ${t.person?('· '+escapeHtml(t.person)):''}${currencyNote(t)} ${t.attachmentId?`<span class="file-flag" onclick="event.stopPropagation();viewAttachment('${t.attachmentId}','${escapeHtml(t.attachmentName||'Belge').replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg></span>`:''}</span>
+        <span>${formatDateTR(t.date)} ${t.person?('· '+escapeHtml(t.person)):''}${currencyNote(t)}${paymentMethodNote(t)} ${t.attachmentId?`<span class="file-flag" onclick="event.stopPropagation();viewAttachment('${t.attachmentId}','${escapeHtml(t.attachmentName||'Belge').replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg></span>`:''}</span>
         <span class="tag">${escapeHtml(t.category)}</span>
       </div>
       <div class="tx-amt ${t.type}">${t.type==='gider'?'-':'+'}${fmtMoney(txTRY(t))}</div>
@@ -1149,9 +1248,11 @@ function openTxModal(type, id){
       document.getElementById('txCategory').value = t.category;
       document.getElementById('txDesc').value = t.description||'';
       document.getElementById('txPerson').value = t.person||'';
+      document.getElementById('txPaymentMethod').value = t.paymentMethod||'';
       if(t.attachmentId){
         STATE.currentAttachment = {id:t.attachmentId, name:t.attachmentName, existing:true};
         renderFilePreview(t.attachmentName, t.attachmentId);
+        loadExistingAttachmentThumb(t.attachmentId, t.attachmentName);
       }
     }
   }else{
@@ -1161,6 +1262,7 @@ function openTxModal(type, id){
     document.getElementById('txCurrency').value = 'TRY';
     document.getElementById('txDesc').value = '';
     document.getElementById('txPerson').value = '';
+    document.getElementById('txPaymentMethod').value = '';
   }
   updateTxConverted();
   document.getElementById('txOverlay').classList.add('show');
@@ -1205,18 +1307,83 @@ function updateTxConverted(){
   disp.classList.remove('rate-missing');
 }
 
-function renderFilePreview(name, fileId){
-  const clickAttr = fileId ? `onclick="viewAttachment('${fileId}','${escapeHtml(name).replace(/'/g,"\\'")}')" style="cursor:pointer;text-decoration:underline;"` : '';
+function fileExtLabel(name, type){
+  if(type==='application/pdf') return 'PDF';
+  const ext = (name||'').split('.').pop();
+  return ext && ext.length<=4 ? ext.toUpperCase() : 'DOSYA';
+}
+
+/* Bazı tarayıcı/telefonlarda seçilen dosyanın MIME tipi boş ya da genel
+   ("application/octet-stream") gelebiliyor; bu durumda sadece "type"a bakarak
+   resim/PDF olduğunu anlayamıyoruz ve önizleme yerine indirme linkine düşüyoruz.
+   Bu yüzden MIME tipi netse ona, değilse dosya adının uzantısına bakarak karar veriyoruz. */
+function isImageFile(type, name){
+  if(type && type.startsWith('image/')) return true;
+  if(type && type!=='application/octet-stream') return false;
+  const ext = (name||'').split('.').pop().toLowerCase();
+  return ['jpg','jpeg','png','gif','webp','bmp','heic','heif'].includes(ext);
+}
+function isPdfFile(type, name){
+  if(type==='application/pdf') return true;
+  if(type && type!=='application/octet-stream') return false;
+  const ext = (name||'').split('.').pop().toLowerCase();
+  return ext==='pdf';
+}
+
+/* name: dosya adı, fileId: kayıtlıysa depodaki kimliği (saved), dataUrl/type: elde varsa
+   anında küçük resim önizlemesi göstermek için kullanılır (yeni seçilen dosyalarda hemen elimizde olur). */
+function renderFilePreview(name, fileId, dataUrl, type){
+  const safeName = escapeHtml(name).replace(/'/g,"\\'");
+  const clickJs = fileId ? `viewAttachment('${fileId}','${safeName}')` : `previewLocalAttachment()`;
+  const isImage = isImageFile(type, name) && dataUrl;
+  const thumbHtml = isImage
+    ? `<img src="${dataUrl}" class="file-preview-thumb" onclick="${clickJs}" alt="Önizleme">`
+    : `<div class="file-preview-icon" onclick="${clickJs}">${fileExtLabel(name, type)}</div>`;
   document.getElementById('txFilePreview').innerHTML = `
     <div class="file-preview">
-      <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:var(--teal);fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>
-      <span ${clickAttr}>${escapeHtml(name)}</span>
+      ${thumbHtml}
+      <div class="file-preview-info">
+        <strong onclick="${clickJs}">${escapeHtml(name)}</strong>
+        <span>Önizlemek için dokunun</span>
+      </div>
       <button onclick="removeAttachment()">Kaldır</button>
     </div>`;
 }
 function removeAttachment(){
   STATE.currentAttachment = null;
   document.getElementById('txFilePreview').innerHTML = '';
+}
+
+/* Depoya henüz kaydedilmemiş, yeni seçilen dosyanın kaydı beklenmeden önizlenmesi için */
+function previewLocalAttachment(){
+  if(!STATE.currentAttachment) return;
+  renderFileViewerContent(STATE.currentAttachment.data, STATE.currentAttachment.type, STATE.currentAttachment.name);
+  document.getElementById('fileOverlay').classList.add('show');
+}
+
+/* Düzenleme modunda açılan mevcut (zaten kaydedilmiş) bir belgenin küçük resmini,
+   depodan asenkron olarak çekip önizleme kutusuna yansıtır (resim ise gerçek küçük resim gösterilir). */
+async function loadExistingAttachmentThumb(fileId, name){
+  try{
+    const raw = await safeGet('deniz-file-'+fileId, true);
+    if(!raw) return;
+    const f = JSON.parse(raw);
+    /* Kullanıcı bu arada başka bir kayda geçmiş ya da belgeyi kaldırmışsa üzerine yazmayalım */
+    if(STATE.currentAttachment && STATE.currentAttachment.id===fileId){
+      renderFilePreview(name, fileId, f.data, f.type);
+    }
+  }catch(e){ /* sessizce yoksay; küçük resim yerine ikon görünmeye devam eder */ }
+}
+
+/* Tarayıcının bildirdiği file.type bazen boş ya da genel ("application/octet-stream")
+   olabiliyor. Kaydedilen veride her zaman doğru MIME tipinin bulunması için, tip net
+   değilse dosya adının uzantısından normalize ediyoruz. Böylece hem şimdi hem de ileride
+   bu belgeyi açan her kod yolu (önizleme, indirme, blob oluşturma) doğru tipi görür. */
+function normalizeFileType(type, name){
+  if(type && type!=='' && type!=='application/octet-stream') return type;
+  const ext = (name||'').split('.').pop().toLowerCase();
+  const map = { pdf:'application/pdf', jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', bmp:'image/bmp', heic:'image/heic', heif:'image/heif' };
+  return map[ext] || (type || 'application/octet-stream');
 }
 
 function handleTxFile(ev){
@@ -1229,8 +1396,57 @@ function handleTxFile(ev){
   }
   const reader = new FileReader();
   reader.onload = (e)=>{
-    STATE.currentAttachment = { id: genId(), name: file.name, type: file.type, data: e.target.result, existing:false };
-    renderFilePreview(file.name);
+    const fixedType = normalizeFileType(file.type, file.name);
+    STATE.currentAttachment = { id: genId(), name: file.name, type: fixedType, data: e.target.result, existing:false };
+    renderFilePreview(file.name, null, e.target.result, fixedType);
+  };
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+
+/* ============ ÜYE ÖDEMESİ (AİDAT) MODALI - DOSYA/DEKONT ============
+   Yukarıdaki genel Gelir/Gider dosya yükleme mantığının (handleTxFile / renderFilePreview)
+   Üye Ödemesi modalı için ayrı state ve DOM hedefleri kullanan karşılığı. */
+function renderMemberPaymentFilePreview(name, fileId, dataUrl, type){
+  const safeName = escapeHtml(name).replace(/'/g,"\\'");
+  const clickJs = fileId ? `viewAttachment('${fileId}','${safeName}')` : `previewLocalMemberPaymentAttachment()`;
+  const isImage = isImageFile(type, name) && dataUrl;
+  const thumbHtml = isImage
+    ? `<img src="${dataUrl}" class="file-preview-thumb" onclick="${clickJs}" alt="Önizleme">`
+    : `<div class="file-preview-icon" onclick="${clickJs}">${fileExtLabel(name, type)}</div>`;
+  document.getElementById('memberPaymentFilePreview').innerHTML = `
+    <div class="file-preview">
+      ${thumbHtml}
+      <div class="file-preview-info">
+        <strong onclick="${clickJs}">${escapeHtml(name)}</strong>
+        <span>Önizlemek için dokunun</span>
+      </div>
+      <button onclick="removeMemberPaymentAttachment()">Kaldır</button>
+    </div>`;
+}
+function removeMemberPaymentAttachment(){
+  STATE.currentMemberPaymentAttachment = null;
+  document.getElementById('memberPaymentFilePreview').innerHTML = '';
+}
+/* Depoya henüz kaydedilmemiş, yeni seçilen dosyanın kaydı beklenmeden önizlenmesi için */
+function previewLocalMemberPaymentAttachment(){
+  if(!STATE.currentMemberPaymentAttachment) return;
+  renderFileViewerContent(STATE.currentMemberPaymentAttachment.data, STATE.currentMemberPaymentAttachment.type, STATE.currentMemberPaymentAttachment.name);
+  document.getElementById('fileOverlay').classList.add('show');
+}
+function handleMemberPaymentFile(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  if(file.size > 4*1024*1024){
+    toast('Dosya çok büyük (4MB üzeri). Lütfen daha küçük bir dosya seçin.');
+    ev.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const fixedType = normalizeFileType(file.type, file.name);
+    STATE.currentMemberPaymentAttachment = { id: genId(), name: file.name, type: fixedType, data: e.target.result, existing:false };
+    renderMemberPaymentFilePreview(file.name, null, e.target.result, fixedType);
   };
   reader.readAsDataURL(file);
   ev.target.value = '';
@@ -1238,6 +1454,10 @@ function handleTxFile(ev){
 
 async function saveTransaction(){
   const id = document.getElementById('txId').value || genId();
+  /* Bu kayıt daha önce bir "Üye Ödemesi" modalından memberId ile oluşturulmuşsa (örn. üye
+     aidatı), genel Gelir/Gider düzenleme ekranından tekrar kaydedilirken bu bağlantının
+     silinmemesi için mevcut kaydı burada saklıyoruz. */
+  const existingTx = STATE.tx.find(t=>t.id===id) || null;
   const amount = parseFloat(document.getElementById('txAmount').value);
   const date = document.getElementById('txDate').value;
   const currency = document.getElementById('txCurrency').value;
@@ -1262,9 +1482,11 @@ async function saveTransaction(){
     category: document.getElementById('txCategory').value,
     description: document.getElementById('txDesc').value.trim(),
     person: document.getElementById('txPerson').value.trim(),
+    paymentMethod: document.getElementById('txPaymentMethod').value,
     attachmentId: null,
     attachmentName: null
   };
+  if(existingTx && existingTx.memberId) record.memberId = existingTx.memberId;
 
   if(STATE.currentAttachment){
     record.attachmentId = STATE.currentAttachment.id;
@@ -1309,6 +1531,66 @@ function refreshOpenMemberDuesIfNeeded(){
 }
 
 /* ============ FILE VIEWER ============ */
+/* Görüntüleyici içeriğini üretir: resimlerde doğrudan görsel, PDF'lerde sayfa içi (iframe)
+   önizleme + indirme bağlantısı, diğer dosya türlerinde ise indirme bağlantısı gösterilir. */
+/* PDF'leri "data:" URI olarak <iframe> içine vermek birçok mobil tarayıcıda çalışmıyor
+   (tarayıcının yerleşik PDF görüntüleyicisi data URI'yi reddedip ham veriyi/indirme
+   istemini gösteriyor). Bunun yerine base64 veriyi gerçek bir Blob'a çevirip tarayıcının
+   güvenilir şekilde işleyebildiği geçici bir "blob:" URL'i üretiyoruz. */
+let CURRENT_VIEWER_BLOB_URL = null;
+/* forceMime verilirse, orijinal dosyanın veri URL'sinde ne yazdığına bakılmaksızın Blob bu
+   tipte oluşturulur. Bu önemli: bazı tarayıcı/telefonlarda dosyanın gerçek MIME tipi
+   kaydedilirken boş ya da genel ("application/octet-stream") olarak geliyor; Blob bu genel
+   tiple oluşturulursa tarayıcı içeriği ne olursa olsun "önizlenemez, indir" olarak işliyor.
+   PDF/resim olduğunu zaten (uzantıdan) bildiğimiz durumda doğru MIME'yi açıkça zorluyoruz. */
+function dataUrlToBlobUrl(dataUrl, forceMime){
+  try{
+    const commaIdx = dataUrl.indexOf(',');
+    const header = dataUrl.slice(0, commaIdx);
+    const base64 = dataUrl.slice(commaIdx+1);
+    const mimeMatch = header.match(/data:(.*?)(;base64)?$/);
+    const mime = forceMime || (mimeMatch && mimeMatch[1] ? mimeMatch[1] : 'application/octet-stream');
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], {type: mime});
+    return URL.createObjectURL(blob);
+  }catch(e){
+    return dataUrl;
+  }
+}
+function revokeCurrentViewerBlobUrl(){
+  if(CURRENT_VIEWER_BLOB_URL){
+    URL.revokeObjectURL(CURRENT_VIEWER_BLOB_URL);
+    CURRENT_VIEWER_BLOB_URL = null;
+  }
+}
+
+function renderFileViewerContent(dataUrl, type, name){
+  document.getElementById('fileViewTitle').textContent = name || 'Belge';
+  const body = document.getElementById('fileViewBody');
+  if(!dataUrl){ body.innerHTML = 'Dosya bulunamadı'; return; }
+  revokeCurrentViewerBlobUrl();
+  if(isImageFile(type, name)){
+    body.innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:12px;">`;
+  }else if(isPdfFile(type, name)){
+    /* Mobil tarayıcıların çoğu (Android Chrome, iOS Safari vb.) PDF'i <iframe> içinde
+       göstermez; sadece masaüstü tarayıcılarda çalışır. Bu yüzden iframe'i "varsa güzel"
+       bir ek olarak deniyoruz ama her durumda (masaüstü/mobil, iframe çalışsa da çalışmasa da)
+       her zaman görünen "Yeni Sekmede Aç" ve "İndir" butonlarını da gösteriyoruz; böylece
+       kullanıcı her cihazda belgeye kesin olarak ulaşabiliyor. */
+    CURRENT_VIEWER_BLOB_URL = dataUrlToBlobUrl(dataUrl, 'application/pdf');
+    const safeFileName = escapeHtml(name||'belge.pdf');
+    body.innerHTML = `
+      <iframe src="${CURRENT_VIEWER_BLOB_URL}" style="width:100%;height:60vh;border:none;border-radius:12px;background:#eef4f7;"></iframe>
+      <div class="file-row" style="margin-top:10px;">
+        <a class="btn btn-primary" style="flex:1;min-width:130px;" href="${CURRENT_VIEWER_BLOB_URL}" target="_blank" rel="noopener">Yeni Sekmede Aç</a>
+        <a class="btn btn-ghost" style="flex:1;min-width:130px;" href="${CURRENT_VIEWER_BLOB_URL}" download="${safeFileName}">İndir</a>
+      </div>`;
+  }else{
+    body.innerHTML = `<a class="btn btn-primary" href="${dataUrl}" download="${escapeHtml(name||'belge')}">Dosyayı İndir</a>`;
+  }
+}
 async function viewAttachment(fileId, name){
   document.getElementById('fileViewTitle').textContent = name || 'Belge';
   document.getElementById('fileViewBody').innerHTML = 'Yükleniyor...';
@@ -1316,13 +1598,9 @@ async function viewAttachment(fileId, name){
   const raw = await safeGet('deniz-file-'+fileId, true);
   if(!raw){ document.getElementById('fileViewBody').innerHTML = 'Dosya bulunamadı'; return; }
   const f = JSON.parse(raw);
-  if(f.type && f.type.startsWith('image/')){
-    document.getElementById('fileViewBody').innerHTML = `<img src="${f.data}" style="max-width:100%;border-radius:12px;">`;
-  }else{
-    document.getElementById('fileViewBody').innerHTML = `<a class="btn btn-primary" href="${f.data}" download="${escapeHtml(f.name)}">Dosyayı İndir</a>`;
-  }
+  renderFileViewerContent(f.data, f.type, f.name || name);
 }
-function closeFileViewer(){ document.getElementById('fileOverlay').classList.remove('show'); }
+function closeFileViewer(){ document.getElementById('fileOverlay').classList.remove('show'); revokeCurrentViewerBlobUrl(); }
 
 /* ============ RATES ============ */
 function renderRates(){
@@ -1459,11 +1737,25 @@ function getReportRange(){
   return {start:s, end:e, label:'Tarih Aralığı · '+formatDateTR(s)+' - '+formatDateTR(e)};
 }
 
-/* Kişi adını üye kaydıyla eşleştirir (rapor çıktısında Baba Adı göstermek için) */
+/* Kişi adını üye kaydıyla eşleştirir (rapor çıktısında Baba Adı göstermek için).
+   NOT: Aynı ad soyada sahip birden fazla üye varsa bu fonksiyon aralarından ilkini döner;
+   bu yüzden elimizde bir memberId varsa her zaman onu tercih ederiz (bkz. resolveMemberForTx). */
 function findMemberByName(name){
   const n = (name||'').toLowerCase().trim();
   if(!n) return null;
   return STATE.members.find(m=> (m.adSoyad||'').toLowerCase().trim()===n) || null;
+}
+
+/* Bir işlemi (varsa) kesin olarak doğru üyeyle eşleştirir. Üye ödemesi (aidat) kayıtları
+   artık oluşturulurken üyenin benzersiz kimliğini (memberId) taşır; bu sayede aynı ad soyada
+   sahip iki farklı üye (örn. baba adları farklı) birbirine karışmaz. memberId taşımayan eski/
+   manuel kayıtlarda ise geriye dönük uyumluluk için isim eşleştirmesine geri düşülür. */
+function resolveMemberForTx(t){
+  if(t && t.memberId){
+    const byId = STATE.members.find(x=>x.id===t.memberId);
+    if(byId) return byId;
+  }
+  return findMemberByName(t ? t.person : '');
 }
 
 let currentReportRows = [];
@@ -1499,9 +1791,9 @@ function renderReport(){
   }).join('');
 
   const tbody = document.getElementById('repTableBody');
-  tbody.innerHTML = rows.length===0 ? `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:16px;">Kayıt bulunamadı</td></tr>` :
+  tbody.innerHTML = rows.length===0 ? `<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:16px;">Kayıt bulunamadı</td></tr>` :
     rows.map(t=>{
-      const mem = findMemberByName(t.person);
+      const mem = resolveMemberForTx(t);
       const babaAdi = mem ? (mem.babaAdi||'') : '';
       return `<tr>
       <td>${formatDateTR(t.date)}</td>
@@ -1510,6 +1802,7 @@ function renderReport(){
       <td>${escapeHtml(t.description||'')}</td>
       <td>${escapeHtml(t.person||'')}</td>
       <td>${escapeHtml(babaAdi)}</td>
+      <td>${escapeHtml(t.paymentMethod||'')}</td>
       <td style="text-align:right;" class="num">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}${t.currency && t.currency!=='TRY' ? `<br><span style="font-size:10px;color:var(--ink-soft);">${Number(t.amount).toLocaleString('tr-TR')} ${t.currency}</span>` : ''}</td>
     </tr>`;
     }).join('');
@@ -1529,6 +1822,7 @@ function rowsToSheet(rows){
     'Kategori': t.category,
     'Açıklama': t.description||'',
     'Kişi': t.person||'',
+    'Ödeme Şekli': t.paymentMethod||'',
     'Birim': t.currency || 'TRY',
     'Orijinal Tutar': t.amount,
     'Tutar (TL)': txTRY(t)
@@ -1536,7 +1830,7 @@ function rowsToSheet(rows){
 }
 function exportToExcelFile(rows, filename){
   const ws = XLSX.utils.json_to_sheet(rowsToSheet(rows));
-  ws['!cols'] = [{wch:12},{wch:8},{wch:20},{wch:30},{wch:18},{wch:8},{wch:14},{wch:14}];
+  ws['!cols'] = [{wch:12},{wch:8},{wch:20},{wch:30},{wch:18},{wch:16},{wch:8},{wch:14},{wch:14}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Hareketler');
   XLSX.writeFile(wb, filename);
@@ -1550,9 +1844,9 @@ function exportReportExcel(){
   exportToExcelFile(currentReportRows, 'deniz-dernek-rapor.xlsx');
 }
 function downloadTemplate(){
-  const sample = [{'Tarih':'2026-01-15','Tür':'Gelir','Kategori':'Üyelik Aidatı','Açıklama':'Ocak ayı aidatı','Kişi':'Ahmet Deniz','Birim':'TRY','Orijinal Tutar':500,'Tutar (TL)':500}];
+  const sample = [{'Tarih':'2026-01-15','Tür':'Gelir','Kategori':'Üyelik Aidatı','Açıklama':'Ocak ayı aidatı','Kişi':'Ahmet Deniz','Ödeme Şekli':'Havale/EFT','Birim':'TRY','Orijinal Tutar':500,'Tutar (TL)':500}];
   const ws = XLSX.utils.json_to_sheet(sample);
-  ws['!cols'] = [{wch:12},{wch:8},{wch:20},{wch:30},{wch:18},{wch:8},{wch:14},{wch:14}];
+  ws['!cols'] = [{wch:12},{wch:8},{wch:20},{wch:30},{wch:18},{wch:16},{wch:8},{wch:14},{wch:14}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Şablon');
   XLSX.writeFile(wb, 'deniz-dernek-sablon.xlsx');
@@ -1597,6 +1891,7 @@ function handleImportExcel(ev){
           category: (row['Kategori']||row['kategori']||'Diğer').toString(),
           description: (row['Açıklama']||row['aciklama']||row['Aciklama']||'').toString(),
           person: (row['Kişi']||row['kisi']||row['Kisi']||'').toString(),
+          paymentMethod: (row['Ödeme Şekli']||row['Odeme Sekli']||row['odeme sekli']||'').toString(),
           amount: originalAmount, currency, rateUsed: currency==='TRY'?1:(amountTRY/originalAmount||1),
           amountTRY, attachmentId:null, attachmentName:null
         });
@@ -1620,12 +1915,20 @@ function renderMemberDatalist(){
   dl.innerHTML = STATE.members.map(m=>`<option value="${escapeHtml(m.adSoyad)}">`).join('');
 }
 
-/* Bir üyenin tüm "Üyelik Aidatı" ödemelerinin listesi (tarihe göre azalan) */
+/* Bir üyenin tüm "Üyelik Aidatı" ödemelerinin listesi (tarihe göre azalan).
+   Önce üyenin benzersiz kimliğine (memberId) göre eşleştirilir; bu, aynı ad soyada sahip
+   iki üye olsa bile (örn. baba adları farklı) ödemelerin birbirine karışmamasını sağlar.
+   memberId taşımayan eski kayıtlarda (bu düzeltmeden önce girilmiş) isimle eşleştirmeye
+   geri düşülür. */
 function getMemberDuesList(member){
   const name = (member.adSoyad||'').toLowerCase().trim();
-  if(name==='') return [];
+  if(name==='' && !member.id) return [];
   return STATE.tx
-    .filter(t=> t.type==='gelir' && t.category==='Üyelik Aidatı' && (t.person||'').toLowerCase().trim()===name)
+    .filter(t=>{
+      if(t.type!=='gelir' || t.category!=='Üyelik Aidatı') return false;
+      if(t.memberId) return t.memberId === member.id;
+      return name!=='' && (t.person||'').toLowerCase().trim()===name;
+    })
     .sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
 }
 
@@ -1665,7 +1968,7 @@ function renderMemberDuesSection(memberId){
       <div class="tx-dot gelir">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
-        <span>${formatDateTR(t.date)}${currencyNote(t)}</span>
+        <span>${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}</span>
       </div>
       <div class="tx-amt gelir">+${fmtMoney(txTRY(t))}</div>
     </div>
@@ -1683,6 +1986,9 @@ function openMemberPaymentModal(memberId){
   document.getElementById('memberPaymentDate').value = todayStr();
   document.getElementById('memberPaymentAmount').value = '';
   document.getElementById('memberPaymentCurrency').value = 'TRY';
+  document.getElementById('memberPaymentMethod').value = '';
+  STATE.currentMemberPaymentAttachment = null;
+  document.getElementById('memberPaymentFilePreview').innerHTML = '';
   const now = new Date();
   const ayAdlari = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   document.getElementById('memberPaymentDesc').value = ayAdlari[now.getMonth()] + ' ' + now.getFullYear() + ' ayı aidatı';
@@ -1738,9 +2044,23 @@ async function saveMemberPayment(){
     category: 'Üyelik Aidatı',
     description: document.getElementById('memberPaymentDesc').value.trim() || 'Üyelik aidatı',
     person: m.adSoyad,
+    paymentMethod: document.getElementById('memberPaymentMethod').value,
+    /* Ödemeyi üyenin ad soyadı yerine benzersiz kimliğiyle (memberId) eşleştiriyoruz.
+       Böylece aynı ad soyada sahip ama baba adı farklı iki üye olsa bile, birine girilen
+       ödeme diğerine yansımaz. */
+    memberId: m.id,
     attachmentId: null,
     attachmentName: null
   };
+
+  if(STATE.currentMemberPaymentAttachment){
+    record.attachmentId = STATE.currentMemberPaymentAttachment.id;
+    record.attachmentName = STATE.currentMemberPaymentAttachment.name;
+    const ok = await safeSet('deniz-file-'+STATE.currentMemberPaymentAttachment.id, JSON.stringify({
+      name: STATE.currentMemberPaymentAttachment.name, type: STATE.currentMemberPaymentAttachment.type, data: STATE.currentMemberPaymentAttachment.data
+    }), true);
+    if(!ok) toast('Dosya kaydedilemedi, ödeme dosyasız kaydedildi');
+  }
 
   STATE.tx.push(record);
   await persistTx();
@@ -2254,6 +2574,7 @@ async function applyDrivePayload(data){
         await safeSet(FILE_KEY_PREFIX + id, JSON.stringify(data.files[id]), true);
       }
     }
+    migrateMemberPaymentLinks();
     const stamp = data.exportedAt ? Date.parse(data.exportedAt) : Date.now();
     STATE.settings.localUpdatedAt = stamp;
     STATE.settings.driveLastBackup = stamp;
