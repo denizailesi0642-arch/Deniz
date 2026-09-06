@@ -377,6 +377,24 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
   }
 }
 
+/* ---------- tek üye ödeme çıktısı önizlemesi (ekranda, overlay içinde) ----------
+   #memberPrintPreviewOverlay normal ekranda diğer overlay'ler gibi (position:fixed,
+   modal kartı) davranır - printMemberDetail() içeriği doldurup ".show" ekleyince
+   kullanıcı bunu gerçekten ekranda görür. Asıl yazdırma ise confirmMemberPrint()
+   tarafından bu içerik tamamen BAĞIMSIZ, ayrı bir pencereye/sekmeye kopyalanarak
+   yapılır (ana sayfanın blur/glass gibi karmaşık CSS'i yazdırmaya karışmasın diye);
+   bu yüzden burada sadece EKRANDAKİ önizlemenin görünümünü tanımlıyoruz. */
+#printSingleMemberDetail{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--ink);}
+#printSingleMemberDetail .psmd-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;border-bottom:3px solid var(--sea-deep);padding-bottom:10px;}
+#printSingleMemberDetail .psmd-header svg{width:44px;height:44px;flex-shrink:0;}
+#printSingleMemberDetail .psmd-header h2{margin:0;font-family:'Manrope',system-ui,sans-serif;font-size:18px;color:var(--sea-deep);}
+#printSingleMemberDetail table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12.5px;}
+#printSingleMemberDetail .psmd-fields td{padding:6px;border-bottom:1px solid rgba(11,54,84,0.1);}
+#printSingleMemberDetail .psmd-fields td:first-child{color:var(--ink-soft);width:140px;}
+#printSingleMemberDetail .psmd-stats td{padding:8px 6px;font-weight:700;border:1px solid #ddd;}
+#printSingleMemberDetail .psmd-tx th,#printSingleMemberDetail .psmd-tx td{padding:6px;border:1px solid #ddd;text-align:left;}
+#printSingleMemberDetail .psmd-tx thead{display:table-header-group;}
+
 /* ---------- desktop layout ---------- */
 @media(min-width:900px){
   .nav-mobile{display:none;}
@@ -540,45 +558,6 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <table class="tx-table">
             <thead><tr><th>Ad Soyad</th><th>Baba Adı</th><th>Telefon</th><th>Üyelik Tarihi</th><th>Durum</th><th style="text-align:right;">Toplam Ödenen Aidat</th></tr></thead>
             <tbody id="memberPrintTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- SINGLE MEMBER DETAIL PRINT (yalnızca yazdırma/PDF içindir; normalde gizlidir) -->
-    <section class="page" id="page-uye-detay">
-      <div class="glass card print-header">
-        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="60" cy="60" r="57" fill="#0b3654"/>
-          <circle cx="85" cy="35" r="9" fill="#ff5a45"/>
-          <path d="M8 64 Q28 48 48 64 T88 64 T128 64" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
-        </svg>
-        <div>
-          <h2 id="printMemberDetailOrgName">Deniz Ailesi Derneği</h2>
-          <div style="font-size:12px;color:#456;">Üye Detayı · <span id="printMemberDetailDate"></span></div>
-        </div>
-      </div>
-      <div class="glass card" style="padding:14px;">
-        <div class="field-row">
-          <div class="field"><label>Ad Soyad</label><div id="printMemberDetailName" style="font-weight:700;"></div></div>
-          <div class="field"><label>Baba Adı</label><div id="printMemberDetailFather"></div></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Telefon</label><div id="printMemberDetailPhone"></div></div>
-          <div class="field"><label>Üyelik Tarihi</label><div id="printMemberDetailJoin"></div></div>
-        </div>
-        <div class="field"><label>Adres</label><div id="printMemberDetailAddress"></div></div>
-        <div class="field"><label>Not</label><div id="printMemberDetailNote"></div></div>
-      </div>
-      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin:12px 0;">
-        <div class="glass stat-card income"><small>Toplam Ödediği</small><strong class="num" id="printMemberDetailTotalIn"></strong></div>
-        <div class="glass stat-card"><small>Hareket Sayısı</small><strong class="num" id="printMemberDetailCount"></strong></div>
-      </div>
-      <div class="glass card" style="padding:10px 14px;">
-        <div class="table-wrap">
-          <table class="tx-table">
-            <thead><tr><th>Tarih</th><th>Kategori</th><th>Açıklama</th><th>Tür</th><th style="text-align:right;">Tutar</th></tr></thead>
-            <tbody id="printMemberDetailTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -933,6 +912,32 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 </div>
 
 <div id="toast"></div>
+
+<!-- TEK ÜYE ÖDEME ÇIKTISI ÖNİZLEME/YAZDIRMA: Rapor/liste yazdırmasının neden
+     çalışıp bunun çalışmadığını ayıklarken şunu fark ettik: rapor ve liste
+     sayfaları kullanıcı tarafından ÖNCE ekranda görüntüleniyor (goPage ile
+     gerçek bir geçiş), sonra AYRI bir dokunuşla "Yazdır" deniyor - yani
+     window.print() çağrıldığında içerik zaten en az bir kez tam olarak
+     boyanmış (paint) oluyor. Tek üye çıktısında ise içerik oluşturulup AYNI
+     anda window.print() çağrılıyordu; Android'in yazdırma alt sistemi bu
+     "tek dokunuşta oluştur+yazdır" senaryosunda içeriği doğru yakalayamıyor
+     (gecikmeler artırılsa da fark etmiyor). Çözüm: burada da rapor/liste ile
+     BİREBİR aynı deseni uyguluyoruz - önce gerçek, ekranda görünen bir
+     önizleme overlay'i açılır (kullanıcı içeriği görür), yazdırma AYRI bir
+     "Yazdır" butonuna basıldığında, ayrı bir kullanıcı dokunuşuyla tetiklenir. -->
+<div class="overlay" id="memberPrintPreviewOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head no-print">
+      <h3>Yazdırma Önizleme</h3>
+      <button class="modal-close" onclick="closeMemberPrintPreview()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="printSingleMemberDetail"></div>
+    <button class="btn btn-primary btn-block no-print" style="margin-top:16px;" onclick="confirmMemberPrint()">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;vertical-align:-3px;margin-right:4px;"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+      Yazdır / PDF Kaydet
+    </button>
+  </div>
+</div>
 
 <script>
 /* ============ CONSTANTS ============ */
@@ -1900,13 +1905,22 @@ function renderReport(){
 /* Sayfayı yazdırma görünümüne geçirir ve tarayıcının yazdırma iletişim kutusunu açar.
    window.print() çağrısı, içerik DOM'a yazıldıktan hemen sonra değil bir render/paint
    döngüsü bekledikten sonra yapılır; aksi halde bazı tarayıcılarda (özellikle mobil
-   Safari/WebView) henüz boyanmamış yeni içerik yakalanamadığından çıktı boş çıkabiliyor. */
+   Safari/WebView) henüz boyanmamış yeni içerik yakalanamadığından çıktı boş çıkabiliyor.
+   Rapor ve üye listesi sayfaları normal gezinmede zaten en az bir kez ekrana geldiği için
+   tarayıcı bu alt ağaçları önceden bir kez düzenlemiş (layout) oluyor. Üye detay sayfası
+   (page-uye-detay) ise normal gezinmede HİÇ gösterilmiyor; ilk kez tam yazdırma anında
+   DOM'a çiziliyor. Bu "soğuk" ilk çizim, mobil cihazlarda çift requestAnimationFrame'in
+   sağladığı 1-2 karelik süreden daha uzun sürebiliyor - bu yüzden çift rAF'a ek olarak
+   kısa bir gerçek zaman gecikmesi de ekliyoruz; bu, önceden ısınmış sayfalarda fark
+   edilmez ama ilk kez çizilen sayfalarda tarayıcıya yetişmesi için gereken payı verir. */
 function triggerPrint(pageId){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('print-active'));
-  document.getElementById(pageId).classList.add('print-active');
+  const targetPage = document.getElementById(pageId);
+  targetPage.classList.add('print-active');
+  void targetPage.offsetHeight; /* senkron layout'u zorla tetikler */
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{
-      window.print();
+      setTimeout(()=>{ window.print(); }, 200);
     });
   });
 }
@@ -2334,9 +2348,33 @@ function printMembers(){
   triggerPrint('page-uyeler');
 }
 
-/* Tek bir üyenin bilgilerini ve TÜM ödeme geçmişini (getMemberAllPayments) ayrı bir
-   yazdırma şablonuna doldurup PDF/yazıcı çıktısı olarak sunar. Üye modalındaki
-   "Yazdır/PDF" ikonuna basıldığında çağrılır. */
+/* ============ TEK ÜYE ÖDEME ÇIKTISI - ÖNCE ÖNİZLE, SONRA AYRI DOKUNUŞLA YAZDIR ============
+   ÖNCEKİ DENEMELER VE NEDEN ÇALIŞMADILAR:
+   1) page-uye-detay adlı SPA "sayfasını" diğer sayfalarla aynı .page/.active
+      mekanizmasına sokup triggerPrint() ile yazdırmak: boş çıktı.
+   2) Sayfa yapısından bağımsız, gizli bir kapsayıcıyı içerik doldurulur
+      doldurulmaz aynı fonksiyon içinde window.print() ile yazdırmak: yine
+      boş çıktı (bkz. ekran görüntüleri - Print Spooler tamamen boş sayfa
+      üretti).
+   ORTAK KÖK NEDEN: Her iki denemede de içerik oluşturma ve window.print()
+   çağrısı AYNI kullanıcı dokunuşu içinde, art arda yapılıyordu. Rapor ve
+   üye listesi çıktısının ÇALIŞMASININ sebebi ise şu: kullanıcı önce o
+   sayfaya goPage() ile GERÇEKTEN geçiyor ve ekranda görüyor, ancak ONDAN
+   SONRA, AYRI bir dokunuşla "Yazdır" butonuna basıyor. Yani window.print()
+   çağrıldığı anda içerik zaten en az bir tam boyama (paint) döngüsünü
+   tamamlamış oluyor. Android'in yazdırma alt sistemi, aynı dokunuşta
+   oluşturulup hemen yazdırılan içeriği güvenilir şekilde yakalayamıyor;
+   rAF/setTimeout gecikmeleri bunu telafi etmiyor.
+
+   ÇÖZÜM: Rapor/liste ile BİREBİR aynı iki adımlı deseni uyguluyoruz:
+   1) printMemberDetail() SADECE içeriği oluşturup gerçek, ekranda görünen
+      bir önizleme overlay'i (#memberPrintPreviewOverlay) açar. Kullanıcı
+      içeriği ekranda görür.
+   2) confirmMemberPrint() ise o overlay içindeki AYRI "Yazdır / PDF Kaydet"
+      butonuna basıldığında, YENİ ve BAĞIMSIZ bir kullanıcı dokunuşuyla
+      çağrılır ve o an window.print()'i tetikler. Bu noktada içerik zaten
+      ekranda gerçekten boyanmış durumda olduğu için Android'in yazdırma
+      alt sistemi onu doğru şekilde yakalayabiliyor. */
 function printMemberDetail(){
   const id = document.getElementById('memberId').value;
   if(!id){ toast('Önce üyeyi kaydedin'); return; }
@@ -2345,30 +2383,131 @@ function printMemberDetail(){
   const payments = getMemberAllPayments(m);
   const totalIn = payments.filter(t=>t.type==='gelir').reduce((s,t)=>s+txTRY(t),0);
 
-  document.getElementById('printMemberDetailOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
-  document.getElementById('printMemberDetailDate').textContent = formatDateTR(todayStr());
-  document.getElementById('printMemberDetailName').textContent = m.adSoyad || '';
-  document.getElementById('printMemberDetailFather').textContent = m.babaAdi || '-';
-  document.getElementById('printMemberDetailPhone').textContent = m.telefon || '-';
-  document.getElementById('printMemberDetailJoin').textContent = m.uyelikTarihi ? formatDateTR(m.uyelikTarihi) : '-';
-  document.getElementById('printMemberDetailAddress').textContent = m.adres || '-';
-  document.getElementById('printMemberDetailNote').textContent = m.not || '-';
-  document.getElementById('printMemberDetailTotalIn').textContent = fmtMoney(totalIn);
-  document.getElementById('printMemberDetailCount').textContent = payments.length;
-
-  const tbody = document.getElementById('printMemberDetailTableBody');
-  tbody.innerHTML = payments.length===0
-    ? `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:16px;">Ödeme kaydı yok</td></tr>`
+  const rowsHtml = payments.length===0
+    ? `<tr><td colspan="5" style="text-align:center;color:#4c7690;padding:16px;">Ödeme kaydı yok</td></tr>`
     : payments.map(t=>`<tr>
         <td>${formatDateTR(t.date)}</td>
         <td>${escapeHtml(t.category)}</td>
         <td>${escapeHtml(t.description||'')}</td>
         <td>${t.type==='gelir'?'Gelir':'Gider'}</td>
-        <td style="text-align:right;" class="num">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}</td>
+        <td style="text-align:right;">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}</td>
       </tr>`).join('');
 
-  triggerPrint('page-uye-detay');
+  const container = document.getElementById('printSingleMemberDetail');
+  container.innerHTML = `
+    <div class="psmd-header">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="57" fill="#0b3654"/>
+        <circle cx="85" cy="35" r="9" fill="#ff5a45"/>
+        <path d="M8 64 Q28 48 48 64 T88 64 T128 64" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h2>${escapeHtml(STATE.settings.orgName || 'Deniz Ailesi Derneği')}</h2>
+        <div style="font-size:12px;color:#456;">Üye Detayı · ${formatDateTR(todayStr())}</div>
+      </div>
+    </div>
+    <table class="psmd-fields">
+      <tr><td>Ad Soyad</td><td><strong>${escapeHtml(m.adSoyad||'')}</strong></td></tr>
+      <tr><td>Baba Adı</td><td>${escapeHtml(m.babaAdi||'-')}</td></tr>
+      <tr><td>Telefon</td><td>${escapeHtml(m.telefon||'-')}</td></tr>
+      <tr><td>Üyelik Tarihi</td><td>${m.uyelikTarihi ? formatDateTR(m.uyelikTarihi) : '-'}</td></tr>
+      <tr><td>Adres</td><td>${escapeHtml(m.adres||'-')}</td></tr>
+      <tr><td>Not</td><td>${escapeHtml(m.not||'-')}</td></tr>
+    </table>
+    <table class="psmd-stats">
+      <tr><td>Toplam Ödediği</td><td>${fmtMoney(totalIn)}</td></tr>
+      <tr><td>Hareket Sayısı</td><td>${payments.length}</td></tr>
+    </table>
+    <table class="psmd-tx">
+      <thead><tr><th>Tarih</th><th>Kategori</th><th>Açıklama</th><th>Tür</th><th style="text-align:right;">Tutar</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+
+  document.getElementById('memberPrintPreviewOverlay').classList.add('show');
 }
+
+function closeMemberPrintPreview(){
+  document.getElementById('memberPrintPreviewOverlay').classList.remove('show');
+}
+
+/* Önizleme overlay'i zaten ekranda gerçekten boyanmış durumdayken, kullanıcının
+   AYRI "Yazdır / PDF Kaydet" dokunuşuyla çağrılır.
+
+   YENİ YAKLAŞIM - NEDEN: Önizleme artık ekranda düzgün görünmesine rağmen
+   (yani "aynı dokunuşta oluştur+yazdır" sorunu çözülmüştü) çıktı YİNE boş
+   çıktı. Bu, sorunun ana sayfanın kendisinde olduğunu gösteriyor: bu sayfa
+   genelinde yoğun biçimde backdrop-filter/blur, iç içe overlay'ler ve
+   karmaşık .page/.app yerleşimleri kullanılıyor. Android'in yazdırma
+   alt sistemi (Print Spooler), @media print kurallarıyla "gizlenmiş" bu
+   karmaşık ağacı güvenilir şekilde yeniden düzenleyip yazdıramıyor gibi
+   görünüyor - içerik ekranda görünse bile.
+
+   ÇÖZÜM: İçerik, ana sayfanın HİÇBİR CSS/DOM karmaşıklığını taşımayan,
+   tamamen BAĞIMSIZ, sade bir belgeye (ayrı bir sekme/pencere) kopyalanır
+   ve yazdırma o bağımsız belge üzerinden yapılır. Bu belgede blur, glass,
+   position:fixed, iç içe overlay yok - sadece düz tablolar ve metin var. */
+function confirmMemberPrint(){
+  const inner = document.getElementById('printSingleMemberDetail').innerHTML;
+  const printDoc = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Üye Detayı</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:Arial,Helvetica,sans-serif;color:#0b3654;margin:16px;background:#fff;}
+  .psmd-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;border-bottom:3px solid #0b3654;padding-bottom:10px;}
+  .psmd-header svg{width:44px;height:44px;flex-shrink:0;}
+  .psmd-header h2{margin:0;font-size:18px;color:#0b3654;}
+  table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12.5px;}
+  .psmd-fields td{padding:7px 8px;border-bottom:1px solid rgba(11,54,84,0.12);white-space:nowrap;}
+  .psmd-fields td:first-child{color:#4c7690;width:140px;}
+  .psmd-fields td:last-child{white-space:normal;}
+  .psmd-stats td{padding:9px 8px;font-weight:700;border-bottom:1px solid rgba(11,54,84,0.12);white-space:nowrap;}
+  .psmd-tx{table-layout:auto;}
+  .psmd-tx th{text-align:left;padding:8px 8px;color:#4c7690;font-size:10.5px;border-bottom:2px solid rgba(11,54,84,0.18);white-space:nowrap;}
+  .psmd-tx td{padding:8px 8px;border-bottom:1px solid rgba(11,54,84,0.10);font-size:11px;white-space:nowrap;}
+  .psmd-tx th:last-child,.psmd-tx td:last-child{text-align:right;}
+  .psmd-tx thead{display:table-header-group;}
+  @media print{
+    @page{ margin:12mm; size:auto; }
+    body{margin:0;}
+    .psmd-tx tr{break-inside:avoid;page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>${inner}</body>
+</html>`;
+
+  const blob = new Blob([printDoc], { type:'text/html' });
+  const url = URL.createObjectURL(blob);
+  const printWin = window.open(url, '_blank');
+
+  if(!printWin){
+    toast('Yeni pencere açılamadı. Tarayıcıda açılır pencereye izin verin.');
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  let cleaned = false;
+  const cleanup = ()=>{
+    if(cleaned) return;
+    cleaned = true;
+    URL.revokeObjectURL(url);
+  };
+
+  printWin.addEventListener('load', ()=>{
+    setTimeout(()=>{
+      printWin.focus();
+      printWin.print();
+    }, 250);
+  });
+  printWin.addEventListener('afterprint', ()=>{ cleanup(); printWin.close(); });
+  setTimeout(cleanup, 20000); /* pencere kapanmasa da nesne URL'sini serbest bırak */
+}
+
+
 function exportMembersExcel(){
   const list = getFilteredSortedMembers();
   if(list.length===0){ toast('Aktarılacak üye yok'); return; }
@@ -2982,6 +3121,7 @@ document.getElementById('ratesOverlay').addEventListener('click', e=>{ if(e.targ
 document.getElementById('fileOverlay').addEventListener('click', e=>{ if(e.target.id==='fileOverlay') closeFileViewer(); });
 document.getElementById('memberOverlay').addEventListener('click', e=>{ if(e.target.id==='memberOverlay') closeMemberModal(); });
 document.getElementById('memberPaymentOverlay').addEventListener('click', e=>{ if(e.target.id==='memberPaymentOverlay') closeMemberPaymentModal(); });
+document.getElementById('memberPrintPreviewOverlay').addEventListener('click', e=>{ if(e.target.id==='memberPrintPreviewOverlay') closeMemberPrintPreview(); });
 
 /* ============ PWA: SERVICE WORKER + ANA EKRANA EKLE ============ */
 if('serviceWorker' in navigator){
