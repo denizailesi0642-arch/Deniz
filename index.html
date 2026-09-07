@@ -930,8 +930,12 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       <input type="text" id="memberPaymentName" readonly style="background:rgba(11,54,84,0.06);font-weight:700;">
     </div>
     <div class="field-row">
-      <div class="field"><label>Tarih</label><input type="date" id="memberPaymentDate"></div>
+      <div class="field"><label>Tarih (ödemenin yapıldığı gün)</label><input type="date" id="memberPaymentDate"></div>
       <div class="field"><label>Tutar</label><input type="number" id="memberPaymentAmount" placeholder="0.00" step="0.01" min="0" oninput="updateMemberPaymentConverted()"></div>
+    </div>
+    <div class="field">
+      <label>Hangi Ay İçin (Aidat Dönemi)</label>
+      <input type="month" id="memberPaymentDuesMonth" onchange="syncMemberPaymentDescWithDuesMonth()">
     </div>
     <div class="field-row">
       <div class="field">
@@ -1026,6 +1030,7 @@ const DRIVE_FILE_NAME = 'deniz-dernek-yedek.json';
 const FILE_KEY_PREFIX = 'deniz-file-';
 const CATS_GELIR = ['Üyelik Aidatı','Bağış','Etkinlik Geliri','Sponsorluk','Diğer Gelir'];
 const CATS_GIDER = ['Kira','Fatura','Etkinlik Gideri','Malzeme/Demirbaş','Yardım/Bağış Gideri','Ulaşım','Diğer Gider'];
+const AY_ADLARI = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 /* Kategoriler artık Ayarlar > Kategoriler bölümünden özelleştirilebilir. STATE.settings.catsGelir/
    catsGider tanımlıysa onlar, tanımlı değilse (ilk kurulum / eski yedekler) yukarıdaki varsayılan
    listeler kullanılır - böylece mevcut kayıtlarda hiçbir şey bozulmaz. */
@@ -2236,6 +2241,31 @@ function getMemberDuesList(member){
     .sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
 }
 
+/* Bir hareketin "hangi aya ait" sayılacağını belirler. Üye bir ayın aidatını GEÇ ödediğinde
+   (örn. Ağustos aidatını Eylül'de ödediğinde), ödemenin gerçekte hangi ödeme tarihinde
+   yapıldığından BAĞIMSIZ olarak Ağustos'a sayılması gerekir. Bu yüzden önce t.duesPeriod
+   ("YYYY-MM" formatında, ödeme formundaki "Hangi Ay İçin" alanından gelir) kontrol edilir;
+   bu alan doluysa esas alınır. Eski kayıtlarda veya bu alanın boş bırakıldığı durumlarda
+   (geriye dönük uyumluluk) ödeme tarihinin ayına geri dönülür - mevcut kayıtlarda hiçbir
+   değişiklik olmaz. */
+function monthKeyOfTx(t){
+  if(t.duesPeriod){
+    const parts = t.duesPeriod.split('-');
+    const y = Number(parts[0]), mo = Number(parts[1]);
+    if(y && mo) return y+'-'+(mo-1);
+  }
+  const d = new Date(t.date);
+  return d.getFullYear()+'-'+d.getMonth();
+}
+/* "2026-08" -> "Ağustos 2026" */
+function monthLabelFromYYYYMM(ym){
+  if(!ym) return '';
+  const parts = ym.split('-');
+  const y = Number(parts[0]), mo = Number(parts[1]);
+  if(!y || !mo) return '';
+  return AY_ADLARI[mo-1] + ' ' + y;
+}
+
 /* Bir üyenin, üyelik tarihinden (veya varsa çıkış tarihine kadar) itibaren kaç ay aidat
    ödemediğini ve buna karşılık gelen borç tutarını hesaplar. Ayarlar'da "Aylık Aidat Tutarı"
    girilmemişse (0/boş) bu özellik tamamen devre dışı kalır ve {0,0} döner - mevcut davranış
@@ -2246,10 +2276,7 @@ function computeMemberDebt(member, duesList){
   const start = new Date(member.uyelikTarihi);
   if(isNaN(start.getTime())) return { unpaidMonths:0, debtAmount:0 };
   const endLimit = member.cikisTarihi ? new Date(member.cikisTarihi) : new Date();
-  const paidMonthKeys = new Set(duesList.map(t=>{
-    const d = new Date(t.date);
-    return d.getFullYear()+'-'+d.getMonth();
-  }));
+  const paidMonthKeys = new Set(duesList.map(t=>monthKeyOfTx(t)));
   let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
   const endMonth = new Date(endLimit.getFullYear(), endLimit.getMonth(), 1);
   let unpaid = 0, guard = 0;
@@ -2267,10 +2294,11 @@ function computeMemberDues(member){
   const dues = getMemberDuesList(member);
   const total = dues.reduce((s,t)=>s+txTRY(t),0);
   const now = new Date();
-  const paidThisMonth = dues.some(t=>{
-    const d = new Date(t.date);
-    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-  });
+  const nowKey = now.getFullYear()+'-'+now.getMonth();
+  /* "Bu Ay Ödendi" durumu da aidat DÖNEMİNE göre belirlenir (ödeme tarihine değil) - böylece
+     Ağustos aidatını Eylül'de geç ödeyen bir üye, Eylül'ü değil doğru şekilde Ağustos'u
+     ödemiş sayılır ve Eylül hâlâ "ödenmedi" görünür. */
+  const paidThisMonth = dues.some(t=> monthKeyOfTx(t)===nowKey);
   let lastDate = null;
   dues.forEach(t=>{ if(!lastDate || new Date(t.date) > new Date(lastDate)) lastDate = t.date; });
   const debt = computeMemberDebt(member, dues);
@@ -2348,16 +2376,21 @@ function renderMemberDuesSection(memberId){
     listEl.innerHTML = `<div class="empty-state" style="padding:14px 6px;">Henüz ödeme kaydı yok</div>`;
     return;
   }
-  listEl.innerHTML = payments.map(t=>`
+  listEl.innerHTML = payments.map(t=>{
+    const periodLabel = monthLabelFromYYYYMM(t.duesPeriod);
+    const dateMonthLabel = AY_ADLARI[new Date(t.date).getMonth()] + ' ' + new Date(t.date).getFullYear();
+    const showPeriod = periodLabel && periodLabel !== dateMonthLabel;
+    return `
     <div class="tx-mini" style="cursor:pointer;" onclick="openTxModal('${t.type}','${t.id}')">
       <div class="tx-dot ${t.type}">${iconForCat(t)}</div>
       <div class="tx-info">
         <strong>${escapeHtml(t.description||t.category)}</strong>
-        <span>${escapeHtml(t.category)} · ${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}</span>
+        <span>${escapeHtml(t.category)} · ${formatDateTR(t.date)}${currencyNote(t)}${paymentMethodNote(t)}${showPeriod?` · Dönem: ${periodLabel}`:''}</span>
       </div>
       <div class="tx-amt ${t.type}">${t.type==='gider'?'-':'+'}${fmtMoney(txTRY(t))}</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 /* ============ ÜYE ÖDEMESİ (AİDAT) MODALI ============ */
@@ -2375,10 +2408,27 @@ function openMemberPaymentModal(memberId){
   STATE.currentMemberPaymentAttachment = null;
   document.getElementById('memberPaymentFilePreview').innerHTML = '';
   const now = new Date();
-  const ayAdlari = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-  document.getElementById('memberPaymentDesc').value = ayAdlari[now.getMonth()] + ' ' + now.getFullYear() + ' ayı aidatı';
+  /* Varsayılan olarak "hangi ay için" alanı, ödemenin yapıldığı ayla aynı gelir (çoğu ödeme
+     zamanında yapılır) - ama üye geç ödeme yapıyorsa kullanıcı bu ayı değiştirip gerçek
+     dönemi (örn. bir önceki ay) seçebilir. */
+  const duesMonthStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('memberPaymentDuesMonth').value = duesMonthStr;
+  document.getElementById('memberPaymentDesc').value = monthLabelFromYYYYMM(duesMonthStr) + ' ayı aidatı';
+  STATE.lastAutoMemberPaymentDesc = document.getElementById('memberPaymentDesc').value;
   updateMemberPaymentConverted();
   document.getElementById('memberPaymentOverlay').classList.add('show');
+}
+
+/* "Hangi Ay İçin" alanı değiştirildiğinde, açıklama alanı HÂLÂ otomatik oluşturulan
+   metinle aynıysa (kullanıcı elle değiştirmemişse) yeni aya göre güncellenir. Kullanıcı
+   açıklamayı kendi yazdıysa dokunulmaz. */
+function syncMemberPaymentDescWithDuesMonth(){
+  const descEl = document.getElementById('memberPaymentDesc');
+  const newLabel = monthLabelFromYYYYMM(document.getElementById('memberPaymentDuesMonth').value) + ' ayı aidatı';
+  if(!descEl.value.trim() || descEl.value === STATE.lastAutoMemberPaymentDesc){
+    descEl.value = newLabel;
+  }
+  STATE.lastAutoMemberPaymentDesc = newLabel;
 }
 function closeMemberPaymentModal(){ document.getElementById('memberPaymentOverlay').classList.remove('show'); }
 
@@ -2430,6 +2480,10 @@ async function saveMemberPayment(){
     description: document.getElementById('memberPaymentDesc').value.trim() || 'Üyelik aidatı',
     person: m.adSoyad,
     paymentMethod: document.getElementById('memberPaymentMethod').value,
+    /* Hangi ayın aidatı olduğu ("YYYY-MM") - ödeme tarihinden BAĞIMSIZDIR. Geç ödemelerde
+       (örn. Ağustos aidatı Eylül'de ödendiğinde) borç/"bu ay ödendi" hesapları ödeme
+       tarihi yerine bu alana bakar; bkz. monthKeyOfTx(). */
+    duesPeriod: document.getElementById('memberPaymentDuesMonth').value || null,
     /* Ödemeyi üyenin ad soyadı yerine benzersiz kimliğiyle (memberId) eşleştiriyoruz.
        Böylece aynı ad soyada sahip ama baba adı farklı iki üye olsa bile, birine girilen
        ödeme diğerine yansımaz. */
