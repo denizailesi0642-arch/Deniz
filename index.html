@@ -594,6 +594,12 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <div class="field"><label>Başlangıç</label><input type="date" id="rangeStart"></div>
           <div class="field"><label>Bitiş</label><input type="date" id="rangeEnd"></div>
         </div>
+        <div class="card-title" style="margin-top:14px;"><span>Tür</span></div>
+        <div class="period-tabs" id="reportTypeTabs">
+          <button class="active" data-t="all" onclick="setReportTypeFilter('all')">Tümü</button>
+          <button data-t="gelir" onclick="setReportTypeFilter('gelir')">Gelir</button>
+          <button data-t="gider" onclick="setReportTypeFilter('gider')">Gider</button>
+        </div>
         <button class="btn btn-primary btn-block" onclick="renderReport()">Raporu Getir</button>
       </div>
 
@@ -1853,10 +1859,19 @@ function resolveMemberForTx(t){
 }
 
 let currentReportRows = [];
+let reportTypeFilter = 'all'; /* 'all' | 'gelir' | 'gider' */
+
+function setReportTypeFilter(t){
+  reportTypeFilter = t;
+  document.querySelectorAll('#reportTypeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  renderReport();
+}
+
 function renderReport(){
   const {start, end, label} = getReportRange();
-  document.getElementById('printRangeLabel').textContent = label;
-  const rows = STATE.tx.filter(t=> t.date >= start && t.date <= end)
+  const filterLabel = reportTypeFilter==='gelir' ? ' · Sadece Gelir' : reportTypeFilter==='gider' ? ' · Sadece Gider' : '';
+  document.getElementById('printRangeLabel').textContent = label + filterLabel;
+  const rows = STATE.tx.filter(t=> t.date >= start && t.date <= end && (reportTypeFilter==='all' || t.type===reportTypeFilter))
     .sort((a,b)=> new Date(a.date)-new Date(b.date));
   currentReportRows = rows;
 
