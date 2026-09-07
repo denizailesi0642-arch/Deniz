@@ -366,13 +366,15 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
   table.tx-table tr{break-inside:avoid;page-break-inside:avoid;}
   .member-list-view{display:none !important;}
   .member-print-view{display:block !important;}
-  /* Uzun tabloları içeren kartlar (rapor hareketleri / üye listesi) tek parça olarak
-     bir sonraki sayfaya atılmasın diye break-inside burada bilerek "auto"ya çevrilir;
+  .tx-list-view{display:none !important;}
+  .tx-print-view{display:block !important;}
+  /* Uzun tabloları içeren kartlar (rapor hareketleri / üye listesi / hareketler) tek parça
+     olarak bir sonraki sayfaya atılmasın diye break-inside burada bilerek "auto"ya çevrilir;
      aksi halde kart bir önceki sayfaya sığmadığında tamamı sonraki sayfaya kayıyor ve
      ilk sayfa neredeyse boş kalıp tüm tablo tek başına ikinci sayfayı dolduruyordu.
      Satırların kendisi (tr) yine yukarıda break-inside:avoid ile korunduğu için satır
      ortadan bölünmez, sadece tablo doğal şekilde sayfalar arasında akabilir. */
-  .card.report-table-card, .card.member-print-view{
+  .card.report-table-card, .card.member-print-view, .card.tx-print-view{
     break-inside:auto !important;page-break-inside:auto !important;
   }
 }
@@ -502,6 +504,18 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 
     <!-- TRANSACTIONS -->
     <section class="page" id="page-hareketler">
+      <div class="glass card print-header">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="57" fill="#0b3654"/>
+          <circle cx="85" cy="35" r="9" fill="#ff5a45"/>
+          <path d="M8 64 Q28 48 48 64 T88 64 T128 64" stroke="#fff" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h2 id="printOrgNameTx">Deniz Ailesi Derneği</h2>
+          <div style="font-size:12px;color:#456;">Hareketler · <span id="printTxDate"></span></div>
+        </div>
+      </div>
+
       <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Açıklama, kategori veya kişi ara..." oninput="renderTxList()">
         <button class="btn btn-primary btn-sm" onclick="openTxModal('gelir')" title="Ekle">
@@ -514,8 +528,23 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
         <div class="chip" data-val="gider" onclick="setTypeFilter('gider')">Gider</div>
       </div>
       <div class="filter-chips" id="catChips"></div>
-      <div class="glass card" style="padding:6px 14px;">
+
+      <div class="report-actions no-print">
+        <button class="btn btn-ghost" onclick="printTxList()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg> Yazdır / Çıktı Al</button>
+        <button class="btn btn-primary" onclick="exportTxExcel()"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg> Excel'e Aktar</button>
+      </div>
+
+      <div class="glass card tx-list-view" style="padding:6px 14px;">
         <div id="txListContainer"></div>
+      </div>
+
+      <div class="glass card tx-print-view" style="padding:10px 14px;display:none;">
+        <div class="table-wrap">
+          <table class="tx-table">
+            <thead><tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th><th>Kişi</th><th>Ödeme Şekli</th><th style="text-align:right;">Tutar</th></tr></thead>
+            <tbody id="txPrintTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -1068,6 +1097,7 @@ async function init(){
   document.getElementById('orgNameDisplay').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('printOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('printOrgNameMembers').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+  document.getElementById('printOrgNameTx').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('orgNameInput').value = STATE.settings.orgName || '';
 
   const rawRates = await safeGet(KEYS.RATES, true);
@@ -1250,7 +1280,12 @@ function setCatFilter(v){
 }
 
 /* ============ TX LIST (search page) ============ */
-function renderTxList(){
+/* Arama kutusu, tür (gelir/gider) ve kategori çip filtrelerine göre süzülmüş,
+   tarihe göre sıralanmış hareket listesini döndürür. renderTxList(), yazdırma
+   (renderTxPrintTable) ve Excel'e aktarma (exportTxExcel) AYNI bu fonksiyonu
+   kullanır - böylece ekranda görülen ile yazdırılan/aktarılan veri her zaman
+   birebir aynı olur. */
+function getFilteredSortedTx(){
   const q = (document.getElementById('searchInput').value||'').toLowerCase().trim();
   let list = [...STATE.tx];
   if(STATE.typeFilter!=='all') list = list.filter(t=>t.type===STATE.typeFilter);
@@ -1265,6 +1300,11 @@ function renderTxList(){
     );
   }
   list.sort((a,b)=> new Date(b.date) - new Date(a.date) || b.id.localeCompare(a.id));
+  return list;
+}
+
+function renderTxList(){
+  const list = getFilteredSortedTx();
   const el = document.getElementById('txListContainer');
   if(list.length===0){
     el.innerHTML = emptyStateHtml('Kayıt bulunamadı');
@@ -1281,6 +1321,66 @@ function renderTxList(){
       <div class="tx-amt ${t.type}">${t.type==='gider'?'-':'+'}${fmtMoney(txTRY(t))}</div>
     </div>
   `).join('');
+}
+
+/* ============ HAREKETLER YAZDIRMA (PDF) VE EXCEL ============
+   Üye listesiyle BİREBİR aynı, denenmiş yöntem: ekranda kart görünümüyle
+   (tx-list-view) gösterilen liste, yazdırma anında ayrı bir tabloya
+   (tx-print-view) geçiliyor. Bu geçiş JS ile önceden ve kesin olarak yapılıyor
+   (sadece CSS kuralına bırakılmıyor), çünkü bazı mobil tarayıcılarda salt
+   @media print ile görünür kılınan içerik yazdırma anında yakalanamayıp boş
+   çıkabiliyor. */
+function renderTxPrintTable(){
+  const tbody = document.getElementById('txPrintTableBody');
+  if(!tbody) return;
+  const list = getFilteredSortedTx();
+  tbody.innerHTML = list.length===0 ? `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:16px;">Kayıt bulunamadı</td></tr>` :
+    list.map(t=>{
+      const mem = resolveMemberForTx(t);
+      return `<tr>
+      <td>${formatDateTR(t.date)}</td>
+      <td>${t.type==='gelir'?'Gelir':'Gider'}</td>
+      <td>${escapeHtml(t.category)}</td>
+      <td>${escapeHtml(t.description||'')}</td>
+      <td>${escapeHtml(t.person||(mem?mem.adSoyad:'')||'')}</td>
+      <td>${escapeHtml(t.paymentMethod||'')}</td>
+      <td style="text-align:right;" class="num">${t.type==='gider'?'-':''}${fmtMoney(txTRY(t))}</td>
+    </tr>`;
+    }).join('');
+}
+
+function printTxList(){
+  if(STATE.tx.length===0){ toast('Yazdırılacak hareket yok'); return; }
+  renderTxPrintTable();
+  document.getElementById('printTxDate').textContent = formatDateTR(todayStr());
+
+  const listView = document.querySelector('#page-hareketler .tx-list-view');
+  const printView = document.querySelector('#page-hareketler .tx-print-view');
+  const prevListDisplay = listView ? listView.style.display : '';
+  const prevPrintDisplay = printView ? printView.style.display : '';
+  if(listView) listView.style.display = 'none';
+  if(printView) printView.style.display = 'block';
+
+  let restored = false;
+  const restoreTxViews = ()=>{
+    if(restored) return;
+    restored = true;
+    if(listView) listView.style.display = prevListDisplay;
+    if(printView) printView.style.display = prevPrintDisplay;
+    window.removeEventListener('afterprint', restoreTxViews);
+  };
+  window.addEventListener('afterprint', restoreTxViews);
+  /* 'afterprint' bazı eski/mobil WebView'lerde tetiklenmeyebiliyor; bu yüzden
+     yedek olarak bir süre sonra da eski görünüme dönülüyor. */
+  setTimeout(restoreTxViews, 4000);
+
+  triggerPrint('page-hareketler');
+}
+
+function exportTxExcel(){
+  const list = getFilteredSortedTx();
+  if(list.length===0){ toast('Aktarılacak kayıt yok'); return; }
+  exportToExcelFile(list, 'deniz-dernek-hareketler.xlsx');
 }
 
 /* ============ TRANSACTION MODAL ============ */
@@ -2630,6 +2730,7 @@ async function saveOrgName(){
   document.getElementById('orgNameDisplay').textContent = name;
   document.getElementById('printOrgName').textContent = name;
   document.getElementById('printOrgNameMembers').textContent = name;
+  document.getElementById('printOrgNameTx').textContent = name;
   await touchLocalUpdatedAt();
   scheduleDriveBackup();
   toast('Dernek adı güncellendi');
@@ -2966,6 +3067,7 @@ async function applyDrivePayload(data){
     document.getElementById('orgNameDisplay').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
     document.getElementById('printOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
     document.getElementById('printOrgNameMembers').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+    document.getElementById('printOrgNameTx').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
     document.getElementById('orgNameInput').value = STATE.settings.orgName || '';
   }finally{
     suppressDriveBackup = false;
