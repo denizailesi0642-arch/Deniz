@@ -817,7 +817,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       <div class="field"><label>TL Karşılığı</label><input type="text" id="txConvertedDisplay" readonly></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Kategori</label><select id="txCategory"></select></div>
+      <div class="field"><label>Kategori</label><select id="txCategory" onchange="toggleTxDuesMonthVisibility()"></select></div>
       <div class="field">
         <label>Ödeme Şekli</label>
         <select id="txPaymentMethod">
@@ -829,6 +829,10 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
           <option value="Diğer">Diğer</option>
         </select>
       </div>
+    </div>
+    <div class="field" id="txDuesMonthField" style="display:none;">
+      <label>Hangi Ay İçin (Aidat Dönemi)</label>
+      <input type="month" id="txDuesMonth">
     </div>
     <div class="field"><label>Açıklama</label><input type="text" id="txDesc" placeholder="Örn: Ocak ayı aidatı"></div>
     <div class="field">
@@ -1463,6 +1467,10 @@ function openTxModal(type, id){
       document.getElementById('txDesc').value = t.description||'';
       document.getElementById('txPerson').value = t.person||'';
       document.getElementById('txPaymentMethod').value = t.paymentMethod||'';
+      /* Bu kayıt zaten bir aidat dönemi taşıyorsa onu göster; taşımıyorsa (eski kayıt)
+         geriye dönük uyumluluk için ödeme tarihinin ayını varsayılan olarak öner - böylece
+         kullanıcı düzenleme ekranını açtığında alan boş kalmaz ve isterse düzeltebilir. */
+      document.getElementById('txDuesMonth').value = t.duesPeriod || defaultDuesMonthFromDate(t.date);
       if(t.attachmentId){
         STATE.currentAttachment = {id:t.attachmentId, name:t.attachmentName, existing:true};
         renderFilePreview(t.attachmentName, t.attachmentId);
@@ -1477,11 +1485,27 @@ function openTxModal(type, id){
     document.getElementById('txDesc').value = '';
     document.getElementById('txPerson').value = '';
     document.getElementById('txPaymentMethod').value = '';
+    document.getElementById('txDuesMonth').value = defaultDuesMonthFromDate(todayStr());
   }
+  toggleTxDuesMonthVisibility();
   updateTxConverted();
   document.getElementById('txOverlay').classList.add('show');
 }
 function closeTxModal(){ document.getElementById('txOverlay').classList.remove('show'); }
+
+/* "YYYY-MM-DD" tarihinden "YYYY-MM" ay değerini üretir (month input'un varsayılanı için). */
+function defaultDuesMonthFromDate(dateStr){
+  const d = new Date(dateStr);
+  if(isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+/* "Hangi Ay İçin" alanı sadece kategori "Üyelik Aidatı" (ve tür Gelir) iken anlamlıdır;
+   diğer kategorilerde bu kavram geçerli olmadığından alan gizlenir. */
+function toggleTxDuesMonthVisibility(){
+  const isDues = document.getElementById('txCategory').value === 'Üyelik Aidatı' && STATE.currentTxType==='gelir';
+  document.getElementById('txDuesMonthField').style.display = isDues ? 'block' : 'none';
+}
 
 function setTxType(type, skipCatReset){
   STATE.currentTxType = type;
@@ -1490,6 +1514,7 @@ function setTxType(type, skipCatReset){
   if(!skipCatReset || !document.getElementById('txId').value){
     populateCategorySelect();
   }
+  toggleTxDuesMonthVisibility();
 }
 
 /* ============ CURRENCY / GOLD CONVERSION ============ */
@@ -1696,6 +1721,10 @@ async function saveTransaction(){
     description: document.getElementById('txDesc').value.trim(),
     person: document.getElementById('txPerson').value.trim(),
     paymentMethod: document.getElementById('txPaymentMethod').value,
+    /* Sadece "Üyelik Aidatı" kategorisinde anlamlıdır - hangi ayın aidatı olduğunu, ödeme
+       tarihinden BAĞIMSIZ olarak belirtir (geç ödemelerde borç/"bu ay ödendi" hesapları
+       buna göre çalışır; bkz. monthKeyOfTx()). Diğer kategorilerde null kalır. */
+    duesPeriod: document.getElementById('txCategory').value==='Üyelik Aidatı' ? (document.getElementById('txDuesMonth').value || null) : null,
     attachmentId: null,
     attachmentName: null
   };
