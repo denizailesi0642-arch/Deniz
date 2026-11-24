@@ -874,7 +874,7 @@ h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;let
           <button class="btn btn-ghost btn-sm" style="color:var(--coral-deep);" onclick="clearDevirBalance()">Kaldır</button>
         </div>
         <div id="devirStatus" style="font-size:12px;color:var(--ink-soft);margin-top:8px;"></div>
-        <div class="warn-box">Devir bakiye, derneğin belirlenen tarihteki açılış (kasa+banka) bakiyesidir. Bakiye = Devir tutarı + devir tarihinden itibaren (o gün dahil) net hareketler. Devir tarihinden önceki kayıtlar silinmez; yalnızca bakiyeye ve dönem raporlarının "Devreden Bakiye"sine dahil edilmez. "Geçen Yıldan Hesapla" geçen yıl sonuna kadarki bakiyeyi 1 Ocak devri olarak önerir; onaylamak için Kaydet'e basın.</div>
+        <div class="warn-box"><b>İsteğe bağlı.</b> Raporlarda dönemden önceki bakiye zaten otomatik "Devir" olarak gösterilir. Bu kart yalnızca uygulamaya girmediğiniz eski yıllardan gelen açılış bakiyesini (kasa+banka) tanımlamak içindir. Bakiye = Devir tutarı + devir tarihinden itibaren (o gün dahil) net hareketler. Devir tarihinden önceki kayıtlar silinmez; yalnızca bakiyeye ve dönem raporlarının "Devreden Bakiye"sine dahil edilmez. "Geçen Yıldan Hesapla" geçen yıl sonuna kadarki bakiyeyi 1 Ocak devri olarak önerir; onaylamak için Kaydet'e basın.</div>
       </div>
 
       <div class="glass card" id="safetyCard">
@@ -994,7 +994,7 @@ h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;let
   </div>
 </div>
 
-<div class="corp-footer"><i></i><b id="corpFooterOrg">Deniz Ailesi Derneği</b><br>Resmi Kayıt Defteri · Sürüm 3.5 · Kurumsal Tema</div>
+<div class="corp-footer"><i></i><b id="corpFooterOrg">Deniz Ailesi Derneği</b><br>Resmi Kayıt Defteri · Sürüm 3.6 · Kurumsal Tema</div>
 <nav class="nav-mobile" id="navMobile"></nav>
 
 <!-- Transaction Modal -->
@@ -4580,28 +4580,57 @@ renderDashboardStats = function(){
 };
 
 const _renderReport0 = renderReport;
+/* Devreden bakiye: dönem başlangıcından ÖNCEKİ tüm hareketlerin neti (elle girilmiş bir devir bakiye varsa
+   ve tarihi dönem başından önce/aynıysa, onun üzerinden hesaplanır). */
+function openingBalanceAt(start){
+  const dv = getDevir();
+  if(dv && dv.date <= start) return dv.amount + netOfTx(dv.date, start);
+  return netOfTx(null, start);
+}
 renderReport = function(){
   _renderReport0.apply(this, arguments);
   let grid = document.getElementById('repDevirGrid');
-  const dv = getDevir();
   const rng = getReportRange();
-  if(!dv || rng.start < dv.date){
-    if(grid) grid.remove();
-    if(dv && rng.start < dv.date){ /* dönem devirden önce başlıyor: devreden bakiye hesaplanamaz */ }
-    return;
-  }
-  const opening = dv.amount + netOfTx(dv.date, rng.start);
+  if(!rng.start || !rng.end){ if(grid) grid.remove(); return; }
+  const opening = openingBalanceAt(rng.start);
   const periodNet = STATE.tx.filter(t=>t.date>=rng.start && t.date<=rng.end).reduce((s,t)=> s + (t.type==='gelir'?1:-1)*txTRY(t), 0);
   const closing = opening + periodNet;
   if(!grid){
     grid = document.createElement('div'); grid.id = 'repDevirGrid'; grid.className = 'stat-grid'; grid.style.gridTemplateColumns = 'repeat(2,1fr)';
     const sg = document.getElementById('repNet').closest('.stat-grid'); sg.parentNode.insertBefore(grid, sg.nextSibling);
   }
-  grid.innerHTML = '<div class="stat-card"><small>Devreden Bakiye</small><strong class="num">' + escapeHtml(fmtMoney(opening)) + '</strong></div>' +
+  grid.innerHTML = '<div class="stat-card"><small>Devreden Bakiye (' + escapeHtml(formatDateTR(rng.start)) + ' öncesi)</small><strong class="num">' + escapeHtml(fmtMoney(opening)) + '</strong></div>' +
                    '<div class="stat-card"><small>Dönem Sonu Bakiye</small><strong class="num" style="color:' + (closing>=0?'#1b7a4b':'#a8322d') + '">' + escapeHtml(fmtMoney(closing)) + '</strong></div>';
+  /* Tabloya ilk satır: devir; son satır: dönem sonu bakiye (yazdırmaya da yansır) */
+  const tbody = document.getElementById('repTableBody');
+  if(tbody){
+    const cell = 'style="font-weight:800;background:#eef3f8;"';
+    const first = `<tr><td colspan="7" ${cell}>DEVİR (${escapeHtml(formatDateTR(rng.start))} tarihinden önceki bakiye)</td><td class="num" style="text-align:right;font-weight:800;background:#eef3f8;">${escapeHtml(fmtMoney(opening))}</td></tr>`;
+    const last = `<tr><td colspan="7" ${cell}>DÖNEM SONU BAKİYE (${escapeHtml(formatDateTR(rng.end))})</td><td class="num" style="text-align:right;font-weight:800;background:#eef3f8;">${escapeHtml(fmtMoney(closing))}</td></tr>`;
+    const empty = currentReportRows.length===0;
+    tbody.innerHTML = first + (empty ? '<tr><td colspan="8" style="text-align:center;color:#6b7a8f;padding:12px;">Bu dönemde hareket yok</td></tr>' : tbody.innerHTML) + last;
+  }
   const lab = document.getElementById('printRangeLabel');
   if(lab) lab.textContent += ' · Devreden Bakiye: ' + fmtMoney(opening) + ' · Dönem Sonu Bakiye: ' + fmtMoney(closing);
 };
+
+/* Hızlı dönem seçimi: Son 3 / 6 / 12 ay */
+function setQuickRange(months){
+  const end = new Date(), st = new Date(end.getFullYear(), end.getMonth()-months, end.getDate()+1);
+  document.getElementById('rangeStart').value = localDateStr(st);
+  document.getElementById('rangeEnd').value = localDateStr(end);
+  setPeriod('custom');
+  renderReport();
+}
+/* Hızlı dönem düğmeleri her zaman görünsün: sekme çubuğunun altına da kısayol satırı */
+(function addQuickRangeOutside(){
+  const tabs = document.getElementById('periodTabs');
+  if(!tabs || document.getElementById('quickRangeOuter')) return;
+  const row = document.createElement('div');
+  row.id = 'quickRangeOuter'; row.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px;align-items:center;';
+  row.innerHTML = '<span style="font-size:11px;color:var(--ink-soft);font-weight:700;">HIZLI:</span>' + [3,6,12].map(n=>`<button type="button" class="btn btn-ghost btn-sm" onclick="setQuickRange(${n})">Son ${n} Ay</button>`).join('');
+  tabs.parentNode.insertBefore(row, tabs.nextSibling);
+})();
 setTimeout(()=>{ loadDevirToForm(); try{ renderAll(); renderReport(); }catch(e){} }, 800);
 
 /* ============ START ============ */
