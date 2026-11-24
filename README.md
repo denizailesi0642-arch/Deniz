@@ -1,46 +1,38 @@
-# Deniz Ailesi Derneği — Gelir/Gider Takip Uygulaması
+# Deniz Ailesi Derneği – Gelir/Gider ve Aidat Takibi
 
-Tek dosyalık (HTML/CSS/JS) bir dernek gelir-gider ve üye aidat takip uygulaması. Kurulum gerektirmez, doğrudan tarayıcıda çalışır.
-
-## Canlı Demo
-GitHub Pages etkinleştirildikten sonra şu adresten erişilebilir:
-`https://KULLANICI_ADIN.github.io/REPO_ADIN/`
+Tek dosyalık (`index.html`), sunucusuz bir web uygulaması. Telefonda "Ana ekrana ekle" ile uygulama gibi kullanılabilir (PWA). GitHub Pages üzerinde yayınlanır.
 
 ## Özellikler
-- Gelir/gider hareketleri (döviz ve gram altın birimiyle, TL karşılığı otomatik hesaplanır)
-- Üye kayıtları ve aidat takibi (üyeye özel ödeme ekranı, ödeme geçmişi)
-- Raporlar (günlük/aylık/yıllık/tarih aralığı), yazdırma ve Excel'e aktarma
-- Üye listesini yazdırma / Excel'e aktarma (baba adı dahil)
-- TCMB güncel döviz kurları (otomatik veya manuel giriş)
-- **Ana ekrana ekleme / uygulama olarak yükleme** (mobil ve masaüstü, çevrimdışı çalışma desteğiyle)
+- Gelir / gider kaydı; kategori, ödeme yöntemi, açıklama ve belge (dekont/fotoğraf) ekleme
+- TL, USD, EUR, GBP ve gram altın; kayıt anındaki kur saklanır
+- Üye listesi (ad soyad, baba adı, telefon, üyelik/çıkış tarihi), aylık aidat takibi, borç hesabı, WhatsApp hatırlatma
+- Günlük / aylık / yıllık / özel tarih raporları, yazdırma
+- Excel (içe/dışa aktarma) ve JSON tam yedek
+- Özel kategoriler (Üyelik Aidatı kategorisi silinemez)
 
-## Ana Ekrana Ekleme / Uygulama Olarak Yükleme
-Uygulama bir PWA'dır (Progressive Web App) — normal bir web sitesi gibi tarayıcıda açılır ama telefonda/bilgisayarda gerçek bir uygulama gibi kurulabilir:
+## Veri nerede tutulur?
+Veriler tarayıcının yerel deposunda (localStorage) durur. **Google Drive bağlanırsa** aynı veri Drive'daki "Deniz Ailesi Derneği Yedekleri" klasörüne `deniz-dernek-yedek.json` olarak yazılır (değişiklikten ~4 sn sonra otomatik).
 
-- **Android (Chrome/Edge):** Siteyi aç → Ayarlar sayfasında **"Yükle"** butonuna bas (veya tarayıcı menüsünden "Uygulamayı Yükle").
-- **iPhone/iPad (Safari):** Siteyi aç → alttaki **Paylaş** simgesine dokun → **"Ana Ekrana Ekle"**.
-- **Bilgisayar (Chrome/Edge):** Adres çubuğunun sağındaki kurulum simgesine tıkla, ya da Ayarlar sayfasındaki **"Yükle"** butonunu kullan.
+- Drive'daki yedek daha yeniyse uygulama açılışta sorar: Tamam = bu cihazdaki veri Drive'dakiyle değişir, İptal = bu cihaz korunur ve Drive güncellenir.
+- Her şey tek bir dosyada olduğu için aynı anda iki cihazda farklı değişiklik yapmayın; son yazan kazanır.
+- Düzenli olarak **Ayarlar → JSON yedek** ile bilgisayarınıza da yedek alın. (Excel yedeği üyeleri ve belgeleri içermez.)
+- Belgeler: resimler otomatik 1600 px'e küçültülür, PDF en fazla 2 MB. Tarayıcı deposu yaklaşık 5 MB olduğundan çok belge eklenirse "kaydedilemedi" uyarısı çıkabilir; belgeleri sık sık Drive'a yedekleyin.
 
-Kurulduktan sonra uygulama kendi simgesiyle ana ekranda/masaüstünde görünür, tam ekran açılır ve **internet olmadan da** son yüklenen haliyle çalışabilir (veriler zaten cihazda saklandığı için).
+## Google Drive kurulumu
+1. Google Cloud Console'da proje açın, **Google Drive API**'yi etkinleştirin.
+2. OAuth ekranını yapılandırın; kendinizi test kullanıcısı olarak ekleyin.
+3. **OAuth istemci kimliği (Web uygulaması)** oluşturun; "Yetkili JavaScript kaynağı" olarak sitenizin adresini ekleyin (örn. `https://KULLANICI.github.io`).
+4. Uygulamada Ayarlar → Google Drive bölümüne Client ID'yi yapıştırıp **Bağlan**'a basın. Yalnızca uygulamanın kendi oluşturduğu dosyalara erişir (`drive.file`).
 
-> Not: GitHub Pages otomatik olarak HTTPS ile yayın yaptığı için PWA kurulumu (manifest + service worker) sorunsuz çalışır. Dosyayı sadece bilgisayarınızda `file://` ile açarsanız (GitHub Pages olmadan) "yükleme" özelliği çalışmayabilir; bunun için siteye HTTPS üzerinden (GitHub Pages linkinden) erişmeniz gerekir.
+Not: Drive girişi `file://` ile çalışmaz; siteyi GitHub Pages (https) üzerinden açın. Chrome veya Safari önerilir.
 
-## Veri Saklama Hakkında ÖNEMLİ NOT
-Bu uygulama verileri **tarayıcının localStorage'ında**, yalnızca kullanıldığı cihaz + tarayıcıya özel olarak saklar.
-- Farklı bir cihaz veya tarayıcıdan açıldığında veriler **görünmez** (ortak/bulut senkronizasyonu yoktur).
-- Tarayıcı geçmişi/verileri temizlenirse kayıtlar **kalıcı olarak silinir**.
-- Bu nedenle **Ayarlar > Tüm Verileri Dışa Aktar** ile düzenli Excel yedeği almanız ve dernek üyeleriyle bu dosyayı paylaşmanız önerilir. Aynı Excel şablonuyla başka bir cihaza **İçe Aktar** yapılabilir.
+## Yayınlama (GitHub Pages)
+1. Bu klasördeki tüm dosyaları depo köküne yükleyin.
+2. Settings → Pages → Branch: `main` / `(root)`.
+3. Güncelleme yayınlarken `sw.js` içindeki `CACHE_NAME` değerini artırın.
 
-## Yerel Olarak Çalıştırma
-Sadece `index.html` dosyasını bir tarayıcıda açmanız yeterlidir. Sunucu veya kurulum gerekmez. (PWA kurulum/yükleme özelliği için HTTPS üzerinden — yani GitHub Pages linkinden — açmanız gerekir, bkz. yukarıdaki not.)
+## Dosyalar
+`index.html`, `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `favicon-32.png` — hepsi depo kökünde.
 
-## Repo Dosya Yapısı
-```
-index.html            → Ana uygulama (tüm HTML/CSS/JS tek dosyada)
-manifest.json         → PWA kurulum bilgileri (isim, ikon, renkler)
-sw.js                 → Service worker (çevrimdışı çalışma / önbellekleme)
-icons/                → Uygulama ikonları (farklı boyutlarda)
-```
-
-## Güncelleme
-Kodu düzenledikten sonra değişiklikleri GitHub'a `git push` ile gönderin; GitHub Pages birkaç dakika içinde otomatik günceller. Service worker eski dosyaları önbelleğe aldığı için, güncelleme sonrası kullanıcıların bazen sayfayı **iki kez yenilemesi** (veya "Ana ekrana eklenmiş" uygulamayı kapatıp yeniden açması) gerekebilir.
+## Çevrimdışı
+Uygulama kabuğu önbelleğe alınır; ancak yazı tipleri ve Excel kütüphanesi (CDN) internet gerektirir. Çevrimdışıyken kayıt ekleme çalışır, Excel işlemleri ve Drive/kur güncellemesi çalışmaz.
