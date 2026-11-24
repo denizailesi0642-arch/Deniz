@@ -417,6 +417,121 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
 @media(max-width:899px){.main-col{width:100%;}}
 @media(min-width:640px) and (max-width:1180px){.app{padding-left:20px;padding-right:20px;}}
 </style>
+<style id="corp-theme">
+/* ===== KURUMSAL / RESMİ TEMA (yalnızca görünüm; kaldırmak için bu <style> bloğunu silmek yeterlidir) ===== */
+@media screen{
+:root{
+  --sky-1:#f2f4f7; --sky-2:#f2f4f7; --sky-3:#f2f4f7;
+  --sea-deep:#0b2545; --sea-mid:#1d4472; --sea-soft:#51657f;
+  --glass:#ffffff; --glass-strong:#ffffff; --glass-border:#d5dbe3;
+  --coral:#a8322d; --coral-deep:#a8322d; --coral-glow:rgba(11,37,69,.10); --coral-glow-soft:rgba(11,37,69,.06);
+  --teal:#1b7a4b; --teal-glow:rgba(27,122,75,.2);
+  --ink:#16243a; --ink-soft:#56657a; --ink-faint:#8795a8;
+  --gold:#9a7412; --gold-bg:#fbf6e6;
+  --radius-lg:10px; --radius-md:8px; --radius-sm:6px;
+}
+html,body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;}
+body{background:#f2f4f7 !important;}
+h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;letter-spacing:-.005em;}
+
+/* Üst bant */
+.topbar{background:#ffffff !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-bottom:3px solid #0b2545 !important;box-shadow:0 1px 0 #c9a227 inset, 0 2px 8px rgba(11,37,69,.08);}
+.brand svg{filter:none !important;}
+.brand svg circle[fill="#ff5a45"]{fill:#c9a227;}
+.brand-text h1{font-size:15.5px;font-weight:800;color:#0b2545;text-transform:uppercase;letter-spacing:.02em;}
+.brand-text span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#56657a;}
+.balance-chip{border-radius:6px !important;box-shadow:none !important;border:1px solid #c9d1dc !important;background:#f7f9fb !important;}
+.balance-chip small{font-weight:700;letter-spacing:.08em;}
+
+/* Kartlar: düz, ince çerçeveli */
+.glass{background:#fff !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border:1px solid #d5dbe3 !important;border-radius:10px !important;box-shadow:0 1px 2px rgba(11,37,69,.06) !important;}
+.card-title{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#0b2545;font-weight:800;border-bottom:1px solid #e3e8ee;padding-bottom:8px;margin-bottom:12px;}
+.stat-card{border-top:3px solid #0b2545 !important;}
+.stat-card.income{border-top-color:#1b7a4b !important;}
+.stat-card.expense{border-top-color:#a8322d !important;}
+.stat-card small{text-transform:uppercase;letter-spacing:.05em;font-size:10px;}
+
+/* Ana bakiye kartı */
+.hero{background:#0b2545 !important;box-shadow:0 2px 6px rgba(11,37,69,.25) !important;border:none !important;border-bottom:4px solid #c9a227 !important;border-radius:10px !important;}
+.hero::after{display:none !important;}
+.hero-label{text-transform:uppercase;letter-spacing:.08em;font-size:11px;}
+.hero-pill{border-radius:6px !important;background:rgba(255,255,255,.08) !important;border:1px solid rgba(255,255,255,.2) !important;}
+
+/* Kurlar */
+.rate-item{background:#f7f9fb !important;border:1px solid #d5dbe3 !important;border-radius:6px !important;}
+.rate-item.gold{background:#fbf6e6 !important;border-color:#e3d49a !important;}
+
+/* Butonlar */
+.btn{border-radius:6px !important;font-weight:700;letter-spacing:.01em;}
+.btn-primary{background:#0b2545 !important;box-shadow:none !important;}
+.btn-primary:hover{background:#163a66 !important;}
+.btn-coral{background:#a8322d !important;box-shadow:none !important;}
+.btn-ghost{background:#fff !important;border:1px solid #b9c3d0 !important;color:#0b2545 !important;}
+.btn-sm{border-radius:5px !important;}
+
+/* Formlar */
+.field label{text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;color:#3d4d63;}
+.field input,.field select,.field textarea{border-radius:6px !important;background:#fff !important;border:1px solid #b9c3d0 !important;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#0b2545 !important;box-shadow:0 0 0 3px rgba(11,37,69,.12) !important;}
+.type-toggle button{border-radius:6px !important;background:#fff !important;border:1px solid #b9c3d0 !important;}
+.type-toggle button.sel-gelir{background:#e7f3ec !important;border-color:#1b7a4b !important;color:#1b7a4b !important;}
+.type-toggle button.sel-gider{background:#f8e9e8 !important;border-color:#a8322d !important;color:#a8322d !important;}
+.chip{border-radius:5px !important;background:#fff !important;border:1px solid #c3ccd8 !important;}
+.chip.active{background:#0b2545 !important;color:#fff !important;border-color:#0b2545 !important;}
+
+/* Liste satırları */
+.tx-dot{border-radius:6px !important;}
+.tx-dot.gelir{background:#e7f3ec !important;color:#1b7a4b !important;}
+.tx-dot.gider{background:#f8e9e8 !important;color:#a8322d !important;}
+.tx-mini,.settings-item{border-bottom:1px solid #e3e8ee !important;}
+
+/* Alt menü */
+.nav-mobile{background:#fff !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-top:3px solid #0b2545 !important;box-shadow:0 -2px 10px rgba(11,37,69,.10) !important;}
+.nav-btn.active{color:#0b2545 !important;}
+.nav-btn.active svg{stroke:#0b2545 !important;filter:none !important;}
+.nav-btn.active span{border-bottom:2px solid #c9a227;}
+.nav-fab{background:#0b2545 !important;border:3px solid #c9a227 !important;box-shadow:0 4px 12px rgba(11,37,69,.35) !important;}
+
+/* Pencereler */
+.overlay{background:rgba(11,37,69,.55) !important;backdrop-filter:none !important;}
+.modal{background:#fff !important;border-radius:12px 12px 0 0 !important;border-top:4px solid #0b2545;box-shadow:0 -6px 30px rgba(11,37,69,.35) !important;}
+@media(min-width:640px){.modal{border-radius:12px !important;}}
+.modal-close{border-radius:6px !important;}
+
+/* Resmi alt bilgi */
+.corp-footer{max-width:1180px;margin:0 auto;padding:6px 16px 96px;text-align:center;font-size:10.5px;letter-spacing:.04em;color:#6b7a8f;text-transform:uppercase;}
+.corp-footer b{color:#0b2545;}
+.corp-footer i{display:block;width:60px;height:2px;background:#c9a227;margin:0 auto 8px;}
+.warn-box{border-radius:6px !important;}
+
+/* ===== 3D BUTONLAR ===== */
+.btn{position:relative;border-radius:9px !important;font-weight:800;text-shadow:0 1px 0 rgba(0,0,0,.25);transition:transform .08s ease, box-shadow .08s ease, filter .15s ease;}
+.btn-primary{background:linear-gradient(180deg,#2c5d96 0%,#143a66 48%,#0b2545 100%) !important;color:#fff !important;border:1px solid #071a33 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25), 0 4px 0 #061830, 0 8px 14px rgba(11,37,69,.35) !important;}
+.btn-coral{background:linear-gradient(180deg,#d4564f 0%,#a8322d 50%,#85221e 100%) !important;color:#fff !important;border:1px solid #5e1613 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.22), 0 4px 0 #561210, 0 8px 14px rgba(133,34,30,.35) !important;}
+.quick-actions .btn:first-child{background:linear-gradient(180deg,#2f9a68 0%,#1b7a4b 50%,#126138 100%) !important;color:#fff !important;border:1px solid #0b4426 !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.22), 0 4px 0 #0a3a21, 0 8px 14px rgba(18,97,56,.35) !important;}
+.btn-ghost{background:linear-gradient(180deg,#ffffff 0%,#f1f4f8 60%,#e3e9f0 100%) !important;color:#0b2545 !important;border:1px solid #aab6c5 !important;text-shadow:0 1px 0 #fff;
+  box-shadow:inset 0 1px 0 #fff, inset 0 -2px 0 rgba(11,37,69,.08), 0 3px 0 #b3bfcd, 0 6px 10px rgba(11,37,69,.15) !important;}
+.btn:hover{filter:brightness(1.07);}
+.btn:active{transform:translateY(3px) !important;}
+.btn-primary:active,.btn-coral:active,.quick-actions .btn:first-child:active{box-shadow:inset 0 2px 4px rgba(0,0,0,.4), 0 1px 0 #061830 !important;}
+.btn-ghost:active{box-shadow:inset 0 2px 4px rgba(11,37,69,.25), 0 0 0 #b3bfcd !important;}
+.btn-sm{border-radius:7px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2), 0 3px 0 #061830, 0 5px 8px rgba(11,37,69,.28) !important;}
+.btn-ghost.btn-sm{box-shadow:inset 0 1px 0 #fff, 0 3px 0 #b3bfcd, 0 5px 8px rgba(11,37,69,.12) !important;}
+.btn-block{margin-bottom:4px;}
+.type-toggle button{border-radius:9px !important;background:linear-gradient(180deg,#fff,#eef2f6) !important;box-shadow:inset 0 1px 0 #fff, 0 3px 0 #b3bfcd !important;}
+.type-toggle button:active{transform:translateY(2px);box-shadow:inset 0 2px 3px rgba(0,0,0,.2) !important;}
+.type-toggle button.sel-gelir{background:linear-gradient(180deg,#f0faf4,#d3ebdd) !important;box-shadow:inset 0 2px 3px rgba(27,122,75,.25), 0 1px 0 #8fc2a6 !important;}
+.type-toggle button.sel-gider{background:linear-gradient(180deg,#fcf1f0,#f0d3d1) !important;box-shadow:inset 0 2px 3px rgba(168,50,45,.25), 0 1px 0 #d4a09d !important;}
+.chip{background:linear-gradient(180deg,#fff,#eef2f6) !important;box-shadow:0 2px 0 #b3bfcd !important;}
+.chip.active{background:linear-gradient(180deg,#2c5d96,#0b2545) !important;box-shadow:0 2px 0 #061830 !important;}
+.nav-fab{background:radial-gradient(circle at 35% 28%,#3a6fae 0%,#143a66 55%,#0b2545 100%) !important;border:3px solid #d9b53a !important;
+  box-shadow:inset 0 2px 3px rgba(255,255,255,.4), 0 5px 0 #8c6d12, 0 10px 18px rgba(11,37,69,.45) !important;}
+.nav-fab:active{transform:translateY(4px);box-shadow:inset 0 2px 4px rgba(0,0,0,.4), 0 1px 0 #8c6d12 !important;}
+}
+</style>
 </head>
 <body>
 
@@ -434,7 +549,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
       </svg>
       <div class="brand-text">
         <h1 id="orgNameDisplay">Deniz Ailesi Derneği</h1>
-        <span>Gelir · Gider · Rapor</span>
+        <span>Resmi Kayıt Defteri</span>
       </div>
     </div>
     <div class="balance-chip">
@@ -820,6 +935,7 @@ table.tx-table td{padding:9px 8px;border-bottom:1px solid rgba(11,54,84,0.07);}
   </div>
 </div>
 
+<div class="corp-footer"><i></i><b id="corpFooterOrg">Deniz Ailesi Derneği</b><br>Resmi Kayıt Defteri · Sürüm 3.2 · Kurumsal Tema</div>
 <nav class="nav-mobile" id="navMobile"></nav>
 
 <!-- Transaction Modal -->
@@ -1191,6 +1307,7 @@ async function init(){
   const rawSettings = await safeGet(KEYS.SETTINGS, true);
   if(rawSettings){ STATE.settings = JSON.parse(rawSettings); }
   document.getElementById('orgNameDisplay').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
+  { const f=document.getElementById('corpFooterOrg'); if(f) f.textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği'; }
   document.getElementById('printOrgName').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('printOrgNameMembers').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
   document.getElementById('printOrgNameTx').textContent = STATE.settings.orgName || 'Deniz Ailesi Derneği';
