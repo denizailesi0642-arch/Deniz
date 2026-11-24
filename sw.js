@@ -2,7 +2,7 @@
    Strateji: önce ağ, ağ yoksa önbellek. Sadece aynı kaynaktan gelen GET istekleri önbelleğe alınır;
    Google Drive/OAuth ve kur API istekleri hiç araya girilmeden doğrudan ağa gider.
    Yeni sürüm yayınlarken CACHE_NAME'i artırın. */
-const CACHE_NAME = 'deniz-dernek-v4';
+const CACHE_NAME = 'deniz-dernek-v7';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon-32.png'];
 
 self.addEventListener('install', event => {

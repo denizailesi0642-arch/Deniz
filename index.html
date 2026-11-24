@@ -504,6 +504,50 @@ h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;let
 .corp-footer i{display:block;width:60px;height:2px;background:#c9a227;margin:0 auto 8px;}
 .warn-box{border-radius:6px !important;}
 
+/* ===== ÜYE KARTLARI VE PROFİL ===== */
+.mcard{background:#fff;border:1px solid #d5dbe3;border-left:5px solid #1b7a4b;border-radius:10px;padding:13px;margin-bottom:10px;display:flex;gap:12px;align-items:stretch;cursor:pointer;box-shadow:0 1px 2px rgba(11,37,69,.06),0 4px 10px rgba(11,37,69,.05);transition:transform .1s,box-shadow .1s;}
+.mcard:active{transform:scale(.99);}
+.mcard.debt{border-left-color:#a8322d;} .mcard.exited{border-left-color:#8795a8;opacity:.85;}
+.mav{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 2px 5px rgba(11,37,69,.25);}
+.mmain{flex:1;min-width:0;}
+.mmain strong{display:block;font-size:14.5px;color:#0b2545;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mmain .msub{font-size:11.5px;color:#56657a;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.mb{font-size:10px;font-weight:800;letter-spacing:.03em;padding:3px 8px;border-radius:20px;text-transform:uppercase;}
+.mb.ok{background:#e7f3ec;color:#1b7a4b;} .mb.bad{background:#f8e9e8;color:#a8322d;} .mb.gray{background:#eceff3;color:#56657a;} .mb.warn{background:#fbf3dc;color:#8a6a0d;}
+.mdots{display:flex;gap:3px;margin-top:8px;}
+.mdot{width:14px;height:6px;border-radius:3px;background:#dde3ea;} .mdot.p{background:#1b7a4b;} .mdot.u{background:#d98a86;}
+.mside{text-align:right;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;}
+.mside .mtot{font-weight:800;font-size:14px;color:#1b7a4b;} .mside .mtot span{display:block;font-size:9.5px;font-weight:600;color:#6b7a8f;text-transform:uppercase;letter-spacing:.04em;}
+.pf-modal{max-width:560px !important;padding:0 0 calc(18px + env(safe-area-inset-bottom)) !important;}
+.pf-head{background:#0b2545;color:#fff;padding:18px 16px 16px;border-bottom:4px solid #c9a227;position:relative;border-radius:12px 12px 0 0;}
+.pf-head .mav{width:60px;height:60px;font-size:24px;border:3px solid #c9a227;}
+.pf-head h2{color:#fff !important;font-size:18px;margin:0;} .pf-head .pf-sub{font-size:12px;opacity:.8;margin-top:2px;}
+.pf-x{position:absolute;right:12px;top:12px;width:32px;height:32px;border:0;border-radius:6px;background:rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;}
+.pf-body{padding:14px 14px 0;}
+.pf-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;} .pf-actions .btn{flex:1;min-width:104px;}
+.pf-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pf-kpi{background:#f7f9fb;border:1px solid #d5dbe3;border-top:3px solid #0b2545;border-radius:8px;padding:9px 6px;text-align:center;}
+.pf-kpi small{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#56657a;font-weight:700;margin-bottom:3px;}
+.pf-kpi strong{font-size:13.5px;color:#0b2545;white-space:nowrap;}
+.pf-sec{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#0b2545;border-bottom:1px solid #e3e8ee;padding-bottom:6px;margin:16px 0 10px;}
+.pf-info{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12.5px;}
+.pf-info div small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6b7a8f;font-weight:700;} .pf-info .full{grid-column:1/-1;}
+.pf-months{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.pf-m{border-radius:6px;padding:6px 2px;text-align:center;font-size:10.5px;font-weight:800;border:1px solid transparent;}
+.pf-m i{display:block;font-style:normal;font-size:9px;font-weight:600;opacity:.8;}
+.pf-m.p{background:#e7f3ec;color:#1b7a4b;border-color:#b9dcc8;} .pf-m.l{background:#fbf3dc;color:#8a6a0d;border-color:#ecd78f;} .pf-m.u{background:#f8e9e8;color:#a8322d;border-color:#e5b9b6;} .pf-m.n{background:#eceff3;color:#98a5b5;}
+.pf-score{display:flex;align-items:center;gap:12px;background:#f7f9fb;border:1px solid #d5dbe3;border-radius:10px;padding:12px;}
+.pf-ring{width:64px;height:64px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#0b2545;}
+.pf-ring span{background:#fff;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;}
+.pf-insights{margin:10px 0 0;padding:0;list-style:none;font-size:12.5px;line-height:1.5;}
+.pf-insights li{padding:6px 0 6px 22px;border-bottom:1px dashed #e3e8ee;position:relative;color:#26364d;}
+.pf-insights li::before{content:'';position:absolute;left:4px;top:11px;width:9px;height:9px;border-radius:50%;background:#0b2545;}
+.pf-insights li.g::before{background:#1b7a4b;} .pf-insights li.r::before{background:#a8322d;} .pf-insights li.y::before{background:#c9a227;}
+.pf-pay{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #e3e8ee;cursor:pointer;font-size:12.5px;}
+.pf-pay .d{width:62px;flex-shrink:0;color:#56657a;font-size:11.5px;} .pf-pay .t{flex:1;min-width:0;} .pf-pay .t b{display:block;color:#0b2545;} .pf-pay .t span{color:#6b7a8f;font-size:11px;}
+.pf-pay .a{font-weight:800;white-space:nowrap;} .pf-pay .a.g{color:#1b7a4b;} .pf-pay .a.r{color:#a8322d;}
+
 /* ===== 3D BUTONLAR ===== */
 .btn{position:relative;border-radius:9px !important;font-weight:800;text-shadow:0 1px 0 rgba(0,0,0,.25);transition:transform .08s ease, box-shadow .08s ease, filter .15s ease;}
 .btn-primary{background:linear-gradient(180deg,#2c5d96 0%,#143a66 48%,#0b2545 100%) !important;color:#fff !important;border:1px solid #071a33 !important;
@@ -818,6 +862,21 @@ h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;let
         <div class="warn-box">Yönetici PIN her şeyi yapabilir; görüntüleyici PIN yalnızca kayıtları görür, değişiklik ve ayarlar yapamaz. 10 dakika hareketsizlikte uygulama kendiliğinden kilitlenir. <b>PIN unutulursa kurtarma yolu yoktur</b>: tarayıcı verisini silip Drive veya JSON yedekten geri yüklemeniz gerekir. PIN, aynı cihazı kullanan kişilere karşı bir kapıdır; verileri şifrelemez.</div>
       </div>
 
+      <div class="glass card" id="devirCard">
+        <div class="card-title"><span>Devir Bakiye</span></div>
+        <div class="field-row">
+          <div class="field"><label>Devir Tutarı (TL)</label><input type="number" step="0.01" id="devirAmount" placeholder="Örn: 125000"></div>
+          <div class="field"><label>Devir Tarihi</label><input type="date" id="devirDate"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveDevirBalance()">Kaydet</button>
+          <button class="btn btn-ghost btn-sm" onclick="fillDevirFromLastYear()">Geçen Yıldan Hesapla</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--coral-deep);" onclick="clearDevirBalance()">Kaldır</button>
+        </div>
+        <div id="devirStatus" style="font-size:12px;color:var(--ink-soft);margin-top:8px;"></div>
+        <div class="warn-box">Devir bakiye, derneğin belirlenen tarihteki açılış (kasa+banka) bakiyesidir. Bakiye = Devir tutarı + devir tarihinden itibaren (o gün dahil) net hareketler. Devir tarihinden önceki kayıtlar silinmez; yalnızca bakiyeye ve dönem raporlarının "Devreden Bakiye"sine dahil edilmez. "Geçen Yıldan Hesapla" geçen yıl sonuna kadarki bakiyeyi 1 Ocak devri olarak önerir; onaylamak için Kaydet'e basın.</div>
+      </div>
+
       <div class="glass card" id="safetyCard">
         <div class="card-title"><span>Veri Güvencesi</span></div>
         <div class="warn-box" style="margin-top:0;">Uygulama; temizleme, geri yükleme ve içe aktarma gibi işlemlerden önce ve günde bir kez bu cihazda otomatik anlık kopya alır (son 8 kopya). Hiçbir kopya sizin onayınız olmadan silinmez veya uygulanmaz.</div>
@@ -935,7 +994,7 @@ h1,h2,h3,h4,.hero-amount{font-family:'Inter',system-ui,sans-serif !important;let
   </div>
 </div>
 
-<div class="corp-footer"><i></i><b id="corpFooterOrg">Deniz Ailesi Derneği</b><br>Resmi Kayıt Defteri · Sürüm 3.2 · Kurumsal Tema</div>
+<div class="corp-footer"><i></i><b id="corpFooterOrg">Deniz Ailesi Derneği</b><br>Resmi Kayıt Defteri · Sürüm 3.5 · Kurumsal Tema</div>
 <nav class="nav-mobile" id="navMobile"></nav>
 
 <!-- Transaction Modal -->
@@ -3343,6 +3402,7 @@ async function onDriveTokenReceived(token, expiresIn, manual){
   driveAccessToken = token;
   driveAccessTokenExpiry = Date.now() + ((expiresIn||3600)*1000) - 60000;
   STATE.settings.driveConnected = true;
+  rememberDriveSession(token);
   await persistSettings();
   renderDriveBackupUI();
   hideDriveSyncBar();
@@ -3393,7 +3453,7 @@ function connectGoogleDrive(){
     }
   };
   try{
-    googleTokenClient.requestAccessToken({ prompt: 'consent' });
+    googleTokenClient.requestAccessToken(STATE.settings.driveEmail ? { prompt: 'consent', hint: STATE.settings.driveEmail } : { prompt: 'consent' });
   }catch(err){
     console.error('Google OAuth start error:', err);
     toast('Google bağlantısı başlatılamadı: ' + (err.message || err));
@@ -3403,12 +3463,33 @@ function connectGoogleDrive(){
 function disconnectGoogleDrive(){
   driveAccessToken = null;
   driveAccessTokenExpiry = 0;
+  try{ sessionStorage.removeItem('deniz-drive-token'); }catch(e){}
+  delete STATE.settings.driveEmail;
   STATE.settings.driveConnected = false;
   persistSettings();
   hideDriveSyncBar();
   renderDriveBackupUI();
   toast('Google Drive bağlantısı kesildi');
 }
+
+/* Oturumu hatırla: jetonu (1 saatlik, yalnızca bu sekme/oturum için) sessionStorage'a, hesabın e-postasını
+   ayarlara yazar. E-posta Google'a "login_hint" olarak verilir; böylece her seferinde "Bir hesap seçin"
+   ekranı çıkmaz ve yenileme arka planda sessizce yapılır. */
+function rememberDriveSession(token){
+  try{ sessionStorage.setItem('deniz-drive-token', JSON.stringify({ t: token, exp: driveAccessTokenExpiry })); }catch(e){}
+  if(STATE.settings.driveEmail) return;
+  fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)', { headers:{ Authorization:'Bearer '+token } })
+    .then(r=>r.ok?r.json():null)
+    .then(j=>{ if(j && j.user && j.user.emailAddress){ STATE.settings.driveEmail = j.user.emailAddress; persistSettings(); } })
+    .catch(()=>{});
+}
+function restoreDriveTokenFromSession(){
+  try{
+    const o = JSON.parse(sessionStorage.getItem('deniz-drive-token')||'null');
+    if(o && o.t && o.exp > Date.now()){ driveAccessToken = o.t; driveAccessTokenExpiry = o.exp; }
+  }catch(e){}
+}
+restoreDriveTokenFromSession();
 
 function getDriveAccessToken(interactive){
   if(driveAccessToken && Date.now() < driveAccessTokenExpiry) return Promise.resolve(driveAccessToken);
@@ -3428,6 +3509,7 @@ function getDriveAccessToken(interactive){
       if(resp && resp.access_token){
         driveAccessToken = resp.access_token;
         driveAccessTokenExpiry = Date.now() + ((resp.expires_in||3600)*1000) - 60000;
+        try{ sessionStorage.setItem('deniz-drive-token', JSON.stringify({ t: driveAccessToken, exp: driveAccessTokenExpiry })); }catch(e){}
         done(driveAccessToken);
       }else{
         done(null);
@@ -3438,12 +3520,14 @@ function getDriveAccessToken(interactive){
       done(null);
     };
     try{
-      googleTokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+      const cfg = { prompt: interactive ? 'consent' : '' };
+      if(STATE.settings.driveEmail) cfg.hint = STATE.settings.driveEmail;
+      googleTokenClient.requestAccessToken(cfg);
     }catch(err){
       done(null);
     }
     if(!interactive){
-      setTimeout(()=>done(null), 4000);
+      setTimeout(()=>done(null), 8000);
     }
   });
 }
@@ -3543,7 +3627,8 @@ function buildDriveBackupPayload(){
       monthlyDuesAmount: STATE.settings.monthlyDuesAmount || 0,
       catsGelir: STATE.settings.catsGelir || null,
       catsGider: STATE.settings.catsGider || null,
-      official: STATE.settings.official || null
+      official: STATE.settings.official || null,
+      devir: STATE.settings.devir || null
     },
     rates: STATE.rates,
     files: collectAttachmentFiles()
@@ -3568,6 +3653,7 @@ async function applyDrivePayload(data){
     if(data.settings && Array.isArray(data.settings.catsGelir)) STATE.settings.catsGelir = data.settings.catsGelir;
     if(data.settings && Array.isArray(data.settings.catsGider)) STATE.settings.catsGider = data.settings.catsGider;
     if(data.settings && data.settings.official && typeof data.settings.official==='object') STATE.settings.official = data.settings.official;
+    if(data.settings && data.settings.devir && typeof data.settings.devir==='object') STATE.settings.devir = data.settings.devir;
     if(data.rates) STATE.rates = data.rates;
     if(data.files && typeof data.files==='object'){
       const ids = Object.keys(data.files);
@@ -3848,7 +3934,7 @@ function takeSnapshot(reason, manual){
     const sig = STATE.tx.length + '|' + STATE.members.length + '|' + JSON.stringify(STATE.tx).length + '|' + JSON.stringify(STATE.members).length;
     if(!manual && list.length && list[0].sig === sig) return;
     list.unshift({ at: Date.now(), reason, sig, tx: STATE.tx, members: STATE.members,
-      settings: { orgName: STATE.settings.orgName, monthlyDuesAmount: STATE.settings.monthlyDuesAmount, catsGelir: STATE.settings.catsGelir||null, catsGider: STATE.settings.catsGider||null, official: STATE.settings.official||null } });
+      settings: { orgName: STATE.settings.orgName, monthlyDuesAmount: STATE.settings.monthlyDuesAmount, catsGelir: STATE.settings.catsGelir||null, catsGider: STATE.settings.catsGider||null, official: STATE.settings.official||null, devir: STATE.settings.devir||null } });
     while(list.length > 8) list.pop();
     let ok = writeJsonKey(SNAP_KEY, list);
     while(!ok && list.length > 1){ list.pop(); ok = writeJsonKey(SNAP_KEY, list); }
@@ -4214,6 +4300,309 @@ document.addEventListener('visibilitychange', ()=>{
 /* Açılışta PIN tanımlıysa hemen kilitle (veri yüklenmeden ekranı kapatır) */
 if(getSecurity() && getSecurity().admin){ APP_ROLE = 'locked'; showLockScreen(); }
 setTimeout(renderPinStatus, 700);
+
+/* ============ ÜYE KARTLARI + ÜYE PROFİLİ / ANALİZ (yalnızca ekleme) ============ */
+const AV_COLORS = ['#1d4472','#1b7a4b','#8a5a14','#6b3f8f','#a8322d','#0f6b7a','#4a5a70','#7a3b55'];
+function avColor(str){ let h=0; for(let i=0;i<(str||'').length;i++) h=(h*31+str.charCodeAt(i))>>>0; return AV_COLORS[h%AV_COLORS.length]; }
+function initials(name){ const p=(name||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length>1 ? p[p.length-1][0] : '')).toLocaleUpperCase('tr-TR'); }
+function ymKey(y,m){ return y+'-'+m; } /* m: 0-11, monthKeyOfTx ile aynı biçim */
+
+/* Üyenin ay ay ödeme tablosu ve analizi */
+function analyzeMember(m){
+  const dues = getMemberDuesList(m);
+  const now = new Date();
+  const paidMap = new Map(); /* key -> {tx, late} */
+  dues.forEach(t=>{
+    const k = monthKeyOfTx(t);
+    const d = new Date(t.date);
+    const per = t.duesPeriod ? t.duesPeriod.split('-').map(Number) : [d.getFullYear(), d.getMonth()+1];
+    const late = (d.getFullYear()*12 + d.getMonth()) > (per[0]*12 + per[1]-1);
+    if(!paidMap.has(k)) paidMap.set(k, { tx:t, late });
+  });
+  let start = m.uyelikTarihi ? new Date(m.uyelikTarihi) : null;
+  if(!start || isNaN(start)){ /* üyelik tarihi yoksa ilk ödemeden başla */
+    const dates = dues.map(t=>new Date(t.date)).filter(d=>!isNaN(d));
+    start = dates.length ? new Date(Math.min.apply(null,dates)) : null;
+  }
+  const end = (m.cikisTarihi && !isNaN(new Date(m.cikisTarihi))) ? new Date(m.cikisTarihi) : now;
+  const months = [];
+  if(start){
+    let c = new Date(start.getFullYear(), start.getMonth(), 1), g=0;
+    const e = new Date(end.getFullYear(), end.getMonth(), 1);
+    while(c <= e && g<600){ months.push({ y:c.getFullYear(), m:c.getMonth(), key:ymKey(c.getFullYear(),c.getMonth()) }); c.setMonth(c.getMonth()+1); g++; }
+  }
+  months.forEach(x=>{ const p=paidMap.get(x.key); x.paid=!!p; x.late=!!(p&&p.late); });
+  const curKey = ymKey(now.getFullYear(), now.getMonth());
+  /* geçmiş aylar için borç sayılır; içinde bulunulan ay henüz "eksik" değil, sadece bilgi */
+  const closed = months.filter(x=>x.key!==curKey || m.cikisTarihi);
+  const expected = closed.length, paidN = closed.filter(x=>x.paid).length;
+  const rate = expected ? Math.round(paidN*100/expected) : null;
+  /* seri: en son kapanmış aydan geriye */
+  let streak=0; for(let i=closed.length-1;i>=0;i--){ if(closed[i].paid) streak++; else break; }
+  let best=0, run=0; closed.forEach(x=>{ if(x.paid){ run++; best=Math.max(best,run);} else run=0; });
+  const lateN = closed.filter(x=>x.paid && x.late).length;
+  const last12 = months.slice(-12), prev6 = closed.slice(-12,-6), last6 = closed.slice(-6);
+  const r6 = a=> a.length ? a.filter(x=>x.paid).length/a.length : null;
+  let trend = null; if(prev6.length>=3 && last6.length>=3){ const d=r6(last6)-r6(prev6); trend = d>0.25?'up':(d<-0.25?'down':'flat'); }
+  const payments = dues.map(t=>txTRY(t));
+  const total = payments.reduce((a,b)=>a+b,0);
+  return { dues, months, last12, expected, paidN, rate, streak, best, lateN, trend, total, count: dues.length,
+           avg: dues.length ? total/dues.length : 0, lastDate: dues.length ? dues[0].date : null, debt: computeMemberDebt(m, dues) };
+}
+
+function memberRank(m){
+  const all = STATE.members.filter(x=>!x.cikisTarihi).map(x=>({ id:x.id, a:analyzeMember(x) }))
+    .filter(o=>o.a.rate!==null).sort((p,q)=> (q.a.rate-p.a.rate) || (q.a.total-p.a.total));
+  const i = all.findIndex(o=>o.id===m.id);
+  return i<0 ? null : { pos:i+1, of:all.length };
+}
+
+function monthsBetweenText(d1, d2){
+  let mo = (d2.getFullYear()-d1.getFullYear())*12 + d2.getMonth()-d1.getMonth();
+  if(d2.getDate() < d1.getDate()) mo--; if(mo<0) mo=0;
+  const y=Math.floor(mo/12), r=mo%12;
+  return (y? y+' yıl ':'') + (r||!y ? r+' ay' : '');
+}
+
+function openMemberProfile(id){
+  const m = STATE.members.find(x=>x.id===id); if(!m) return;
+  const a = analyzeMember(m), dd = computeMemberDues(m), all = getMemberAllPayments(m);
+  const totalOut = all.filter(t=>t.type==='gider').reduce((s,t)=>s+txTRY(t),0);
+  const now = new Date(), curKey = ymKey(now.getFullYear(), now.getMonth());
+  const exited = !!m.cikisTarihi;
+  const rank = memberRank(m);
+  const duesAmt = getMonthlyDuesAmount();
+
+  /* içgörüler */
+  const ins = [];
+  if(a.expected===0) ins.push(['','Henüz değerlendirilecek kapanmış bir aidat ayı yok.']);
+  else{
+    ins.push([a.rate>=90?'g':(a.rate>=60?'y':'r'), `Üyelik boyunca ${a.expected} aidat ayının <b>${a.paidN}</b> tanesinde ödeme yapıldı (<b>%${a.rate}</b>).`]);
+    if(a.streak>0) ins.push(['g', `Güncel kesintisiz ödeme serisi: <b>${a.streak} ay</b> (en uzun seri: ${a.best} ay).`]);
+    else ins.push(['r', `Son kapanan ay ödenmemiş; en uzun kesintisiz seri ${a.best} ay.`]);
+    if(a.lateN>0) ins.push(['y', `<b>${a.lateN}</b> aidat kendi ayından sonra, geç ödendi.`]);
+    if(a.trend==='up') ins.push(['g','Son 6 ayda ödeme düzeni, önceki 6 aya göre <b>iyileşiyor</b>.']);
+    if(a.trend==='down') ins.push(['r','Son 6 ayda ödeme düzeni, önceki 6 aya göre <b>kötüleşiyor</b>.']);
+  }
+  if(a.lastDate){ const days=Math.floor((now - new Date(a.lastDate))/86400000); ins.push([days>75?'r':'', `Son aidat ödemesi ${formatDateTR(a.lastDate)} tarihinde (<b>${days} gün önce</b>).`]); }
+  else ins.push(['r','Bu üye için henüz aidat ödemesi kaydı yok.']);
+  if(!dd.paidThisMonth && !exited) ins.push(['y', `${AY_ADLARI[now.getMonth()]} ayı aidatı henüz ödenmedi.`]);
+  if(duesAmt>0 && a.debt.unpaidMonths>0) ins.push(['r', `Hesaplanan borç: <b>${a.debt.unpaidMonths} ay · ${fmtMoney(a.debt.debtAmount)}</b> (aylık aidat ${fmtMoney(duesAmt)}).`]);
+  if(duesAmt>0 && a.count>0 && a.avg < duesAmt*0.95) ins.push(['y', `Ortalama ödeme (${fmtMoney(a.avg)}) aylık aidatın altında; kısmi ödemeler olabilir.`]);
+  if(rank) ins.push(['', `Aktif üyeler arasında ödeme düzeni sıralaması: <b>${rank.pos}. / ${rank.of}</b>.`]);
+  if(totalOut>0) ins.push(['', `Dernekten bu üyeye yapılan ödeme toplamı: <b>${fmtMoney(totalOut)}</b>.`]);
+
+  let label='Değerlendirilemedi', col='#8795a8';
+  if(a.rate!==null){
+    if(a.rate>=90 && a.debt.unpaidMonths===0){ label='Düzenli ödeyen'; col='#1b7a4b'; }
+    else if(a.rate>=90){ label='Düzenli, küçük gecikme'; col='#1b7a4b'; }
+    else if(a.rate>=60){ label='Orta düzeyde'; col='#c9a227'; }
+    else { label='Riskli / takip gerekli'; col='#a8322d'; }
+  }
+  const pct = a.rate===null ? 0 : a.rate;
+  const monthsHtml = a.last12.length ? a.last12.map(x=>{
+      const cls = x.paid ? (x.late?'l':'p') : (x.key===curKey ? 'n' : 'u');
+      return `<div class="pf-m ${cls}">${AY_ADLARI[x.m].slice(0,3)}<i>${String(x.y).slice(2)} · ${x.paid?(x.late?'geç':'ödendi'):(x.key===curKey?'bu ay':'yok')}</i></div>`;
+    }).join('') : '<div style="font-size:12px;color:#6b7a8f;">Üyelik tarihi veya ödeme kaydı olmadığı için tablo oluşturulamadı.</div>';
+
+  const histHtml = all.length ? all.slice(0,40).map(t=>`
+    <div class="pf-pay" onclick="closeMemberProfile();openTxModal('${t.type}','${jsq(t.id)}')">
+      <div class="d">${escapeHtml(formatDateTR(t.date))}</div>
+      <div class="t"><b>${escapeHtml(t.category||'')}${t.duesPeriod?(' · '+escapeHtml(monthLabelFromYYYYMM(t.duesPeriod))):''}</b><span>${escapeHtml(t.description||'')}${t.paymentMethod?(' · '+escapeHtml(t.paymentMethod)):''}${t.receiptNo?(' · '+escapeHtml(t.receiptNo)):''}</span></div>
+      <div class="a ${t.type==='gelir'?'g':'r'}">${t.type==='gelir'?'+':'−'}${escapeHtml(fmtMoney(txTRY(t)))}</div>
+    </div>`).join('') + (all.length>40?`<div style="font-size:11.5px;color:#6b7a8f;padding:8px 0;">En son 40 hareket gösteriliyor (toplam ${all.length}).</div>`:'')
+    : '<div style="font-size:12.5px;color:#6b7a8f;padding:6px 0;">Bu üyeye ait hareket yok.</div>';
+
+  const info = (k,v,full)=> v ? `<div class="${full?'full':''}"><small>${k}</small>${escapeHtml(v)}</div>` : '';
+  const phone = (m.telefon||'').trim();
+  let ov = document.getElementById('profileOverlay');
+  if(!ov){ ov = document.createElement('div'); ov.className='overlay'; ov.id='profileOverlay'; ov.addEventListener('click',e=>{ if(e.target===ov) closeMemberProfile(); }); document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="modal pf-modal">
+    <div class="pf-head">
+      <button class="pf-x" onclick="closeMemberProfile()" aria-label="Kapat">×</button>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="mav" style="background:${avColor(m.adSoyad)}">${escapeHtml(initials(m.adSoyad))}</div>
+        <div style="min-width:0;"><h2>${escapeHtml(m.adSoyad)}</h2>
+          <div class="pf-sub">${m.babaAdi?('Baba adı: '+escapeHtml(m.babaAdi)+' · '):''}${exited?'Ayrıldı':'Aktif üye'}</div></div>
+      </div>
+    </div>
+    <div class="pf-body">
+      <div class="pf-actions">
+        <button class="btn btn-primary btn-sm" onclick="closeMemberProfile();openMemberPaymentModal('${jsq(m.id)}')">+ Ödeme Ekle</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeMemberProfile();openMemberModal('${jsq(m.id)}')">Düzenle</button>
+        ${phone?`<button class="btn btn-ghost btn-sm" onclick="sendDuesReminder('${jsq(m.id)}')">WhatsApp</button><a class="btn btn-ghost btn-sm" href="tel:${escapeHtml(phone.replace(/[^+\d]/g,''))}" style="text-decoration:none;">Ara</a>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="closeMemberProfile();openMemberModal('${jsq(m.id)}');printMemberDetail()">Yazdır</button>
+      </div>
+      <div class="pf-kpis">
+        <div class="pf-kpi"><small>Toplam Aidat</small><strong>${escapeHtml(fmtMoney(a.total))}</strong></div>
+        <div class="pf-kpi"><small>Ödeme Sayısı</small><strong>${a.count}</strong></div>
+        <div class="pf-kpi"><small>Ort. Ödeme</small><strong>${a.count?escapeHtml(fmtMoney(a.avg)):'-'}</strong></div>
+        <div class="pf-kpi" style="border-top-color:${a.debt.debtAmount>0?'#a8322d':'#1b7a4b'}"><small>Güncel Borç</small><strong style="color:${a.debt.debtAmount>0?'#a8322d':'#1b7a4b'}">${duesAmt>0?escapeHtml(fmtMoney(a.debt.debtAmount)):'—'}</strong></div>
+        <div class="pf-kpi"><small>Bu Ay</small><strong style="color:${dd.paidThisMonth?'#1b7a4b':'#a8322d'}">${exited?'—':(dd.paidThisMonth?'Ödendi':'Ödenmedi')}</strong></div>
+        <div class="pf-kpi"><small>Üyelik Süresi</small><strong>${m.uyelikTarihi?escapeHtml(monthsBetweenText(new Date(m.uyelikTarihi), exited?new Date(m.cikisTarihi):now)):'-'}</strong></div>
+      </div>
+
+      <div class="pf-sec">Ödeme Analizi</div>
+      <div class="pf-score">
+        <div class="pf-ring" style="background:conic-gradient(${col} ${pct*3.6}deg,#e3e8ee 0deg);"><span>${a.rate===null?'—':'%'+a.rate}</span></div>
+        <div><div style="font-weight:800;color:${col};font-size:14px;">${label}</div>
+        <div style="font-size:11.5px;color:#56657a;margin-top:2px;">Ödeme düzeni puanı (üyelikten bugüne, kapanmış aylar)</div></div>
+      </div>
+      <ul class="pf-insights">${ins.map(i=>`<li class="${i[0]}">${i[1]}</li>`).join('')}</ul>
+
+      <div class="pf-sec">Son 12 Ay Aidat Durumu</div>
+      <div class="pf-months">${monthsHtml}</div>
+      <div style="font-size:10.5px;color:#6b7a8f;margin-top:6px;">Yeşil: zamanında · Sarı: geç ödendi · Kırmızı: ödenmedi · Gri: içinde bulunulan ay</div>
+
+      <div class="pf-sec">Üye Bilgileri</div>
+      <div class="pf-info">
+        ${info('Telefon', phone)}${info('Üyelik Tarihi', m.uyelikTarihi?formatDateTR(m.uyelikTarihi):'')}
+        ${info('Çıkış Tarihi', m.cikisTarihi?formatDateTR(m.cikisTarihi):'')}${info('Adres', m.adres, true)}${info('Not', m.not, true)}
+      </div>
+
+      <div class="pf-sec">Tüm Hareketler (${all.length})</div>
+      ${histHtml}
+    </div></div>`;
+  ov.classList.add('show');
+}
+function closeMemberProfile(){ const ov=document.getElementById('profileOverlay'); if(ov) ov.classList.remove('show'); }
+
+/* Eski kart çiziciyi geçersiz kılar (eski kod dosyada durur) */
+renderMembersList = function(){
+  const listEl = document.getElementById('memberListContainer');
+  if(!listEl) return;
+  renderMemberStats();
+  const list = getFilteredSortedMembers();
+  if(list.length===0){ listEl.innerHTML = emptyStateHtml('Üye bulunamadı'); return; }
+  listEl.innerHTML = list.map(({m,dues})=>{
+    const exited = !!m.cikisTarihi, debt = dues.debtAmount>0;
+    const a = analyzeMember(m);
+    const dots = a.last12.slice(-6).map(x=>`<div class="mdot ${x.paid?'p':(x.key===(new Date().getFullYear()+'-'+new Date().getMonth())?'':'u')}"></div>`).join('');
+    return `<div class="mcard ${debt?'debt':''} ${exited?'exited':''}" onclick="openMemberProfile('${jsq(m.id)}')">
+      <div class="mav" style="background:${avColor(m.adSoyad)}">${escapeHtml(initials(m.adSoyad))}</div>
+      <div class="mmain">
+        <strong>${escapeHtml(m.adSoyad)}</strong>
+        <div class="msub">${m.babaAdi?('Baba: '+escapeHtml(m.babaAdi)):''}${m.telefon?((m.babaAdi?' · ':'')+escapeHtml(m.telefon)):''}</div>
+        <div class="mbadges">
+          ${exited?`<span class="mb gray">Ayrıldı ${escapeHtml(formatDateTR(m.cikisTarihi))}</span>`:(dues.paidThisMonth?'<span class="mb ok">Bu ay ödendi</span>':'<span class="mb bad">Bu ay ödenmedi</span>')}
+          ${debt?`<span class="mb bad">Borç ${dues.unpaidMonths} ay · ${escapeHtml(fmtMoney(dues.debtAmount))}</span>`:''}
+          ${a.rate!==null && a.rate<60 ? '<span class="mb warn">Takip</span>':''}
+        </div>
+        ${dots?`<div class="mdots" title="Son 6 ay">${dots}</div>`:''}
+      </div>
+      <div class="mside">
+        <div class="mtot">${dues.total>0?escapeHtml(fmtMoney(dues.total)):'-'}<span>toplam aidat</span></div>
+        <div style="display:flex;gap:5px;margin-top:8px;">
+          <button type="button" class="btn btn-coral btn-sm" onclick="event.stopPropagation();openMemberPaymentModal('${jsq(m.id)}')">+ Öde</button>
+          ${(debt && m.telefon)?`<button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();sendDuesReminder('${jsq(m.id)}')" title="WhatsApp ile Hatırlat">💬</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+try{ renderMembersList(); }catch(e){}
+
+/* ============ DEVİR BAKİYE (yalnızca ekleme; devir tanımlı değilse hiçbir şey değişmez) ============ */
+function getDevir(){
+  const d = STATE.settings && STATE.settings.devir;
+  if(!d || typeof d.amount !== 'number' || isNaN(d.amount) || !d.date) return null;
+  return d;
+}
+function netOfTx(fromIncl, toExcl){
+  let n = 0;
+  STATE.tx.forEach(t=>{
+    if(fromIncl && t.date < fromIncl) return;
+    if(toExcl && t.date >= toExcl) return;
+    n += (t.type==='gelir' ? 1 : -1) * txTRY(t);
+  });
+  return n;
+}
+function currentBalanceWithDevir(){
+  const dv = getDevir();
+  return dv ? dv.amount + netOfTx(dv.date, null) : netOfTx(null, null);
+}
+function loadDevirToForm(){
+  const dv = getDevir();
+  const a = document.getElementById('devirAmount'), d = document.getElementById('devirDate'), st = document.getElementById('devirStatus');
+  if(!a) return;
+  a.value = dv ? dv.amount : ''; d.value = dv ? dv.date : '';
+  st.textContent = dv ? ('Aktif: ' + fmtMoney(dv.amount) + ' · ' + formatDateTR(dv.date) + ' tarihinden itibaren') : 'Devir bakiye tanımlı değil (bakiye tüm hareketlerden hesaplanır).';
+}
+async function saveDevirBalance(){
+  if(typeof isViewer==='function' && isViewer()){ viewerBlock(); return; }
+  const amt = parseFloat(document.getElementById('devirAmount').value);
+  const date = document.getElementById('devirDate').value;
+  if(isNaN(amt)){ toast('Devir tutarını girin (eksi olabilir)'); return; }
+  if(!date){ toast('Devir tarihini seçin'); return; }
+  const prev = getDevir();
+  takeSnapshot('Devir bakiye değişmeden önce');
+  STATE.settings.devir = { amount: Math.round(amt*100)/100, date };
+  await persistSettings(); await touchLocalUpdatedAt(); scheduleDriveBackup();
+  auditPush([{ at: Date.now(), kind:'Ayar', action: prev?'Düzenlendi':'Eklendi', id:'devir', detail:'Devir bakiye: ' + amt + ' TL · ' + date }]);
+  loadDevirToForm(); renderAll(); try{ renderReport(); }catch(e){}
+  toast('Devir bakiye kaydedildi');
+}
+async function clearDevirBalance(){
+  if(typeof isViewer==='function' && isViewer()){ viewerBlock(); return; }
+  if(!getDevir()){ toast('Devir bakiye zaten tanımlı değil'); return; }
+  if(!confirm('Devir bakiye kaldırılsın mı? Bakiye tüm hareketlerden hesaplanır.')) return;
+  takeSnapshot('Devir bakiye kaldırılmadan önce');
+  delete STATE.settings.devir;
+  await persistSettings(); await touchLocalUpdatedAt(); scheduleDriveBackup();
+  auditPush([{ at: Date.now(), kind:'Ayar', action:'Silindi', id:'devir', detail:'Devir bakiye kaldırıldı' }]);
+  loadDevirToForm(); renderAll(); try{ renderReport(); }catch(e){}
+  toast('Devir bakiye kaldırıldı');
+}
+function fillDevirFromLastYear(){
+  const y = new Date().getFullYear(), jan1 = y + '-01-01';
+  const dv = getDevir();
+  const bal = (dv && dv.date <= jan1) ? dv.amount + netOfTx(dv.date, jan1) : netOfTx(null, jan1);
+  document.getElementById('devirAmount').value = Math.round(bal*100)/100;
+  document.getElementById('devirDate').value = jan1;
+  toast('Geçen yıl sonu bakiyesi hesaplandı: ' + fmtMoney(bal) + '. Onaylamak için Kaydet\'e basın.');
+}
+
+const _renderDash0 = renderDashboardStats;
+renderDashboardStats = function(){
+  _renderDash0.apply(this, arguments);
+  const dv = getDevir();
+  const pill = document.getElementById('heroDevirPill');
+  if(!dv){ if(pill) pill.remove(); return; }
+  const bal = currentBalanceWithDevir();
+  document.getElementById('topBalance').textContent = fmtMoney(bal);
+  document.getElementById('heroBalance').textContent = fmtMoney(bal);
+  const row = document.querySelector('.hero-row');
+  if(row){
+    let el = pill;
+    if(!el){ el = document.createElement('div'); el.className = 'hero-pill'; el.id = 'heroDevirPill'; row.insertBefore(el, row.firstChild); }
+    el.innerHTML = '<small>Devir Bakiye · ' + escapeHtml(formatDateTR(dv.date)) + '</small><strong class="num">' + escapeHtml(fmtMoney(dv.amount)) + '</strong>';
+  }
+};
+
+const _renderReport0 = renderReport;
+renderReport = function(){
+  _renderReport0.apply(this, arguments);
+  let grid = document.getElementById('repDevirGrid');
+  const dv = getDevir();
+  const rng = getReportRange();
+  if(!dv || rng.start < dv.date){
+    if(grid) grid.remove();
+    if(dv && rng.start < dv.date){ /* dönem devirden önce başlıyor: devreden bakiye hesaplanamaz */ }
+    return;
+  }
+  const opening = dv.amount + netOfTx(dv.date, rng.start);
+  const periodNet = STATE.tx.filter(t=>t.date>=rng.start && t.date<=rng.end).reduce((s,t)=> s + (t.type==='gelir'?1:-1)*txTRY(t), 0);
+  const closing = opening + periodNet;
+  if(!grid){
+    grid = document.createElement('div'); grid.id = 'repDevirGrid'; grid.className = 'stat-grid'; grid.style.gridTemplateColumns = 'repeat(2,1fr)';
+    const sg = document.getElementById('repNet').closest('.stat-grid'); sg.parentNode.insertBefore(grid, sg.nextSibling);
+  }
+  grid.innerHTML = '<div class="stat-card"><small>Devreden Bakiye</small><strong class="num">' + escapeHtml(fmtMoney(opening)) + '</strong></div>' +
+                   '<div class="stat-card"><small>Dönem Sonu Bakiye</small><strong class="num" style="color:' + (closing>=0?'#1b7a4b':'#a8322d') + '">' + escapeHtml(fmtMoney(closing)) + '</strong></div>';
+  const lab = document.getElementById('printRangeLabel');
+  if(lab) lab.textContent += ' · Devreden Bakiye: ' + fmtMoney(opening) + ' · Dönem Sonu Bakiye: ' + fmtMoney(closing);
+};
+setTimeout(()=>{ loadDevirToForm(); try{ renderAll(); renderReport(); }catch(e){} }, 800);
 
 /* ============ START ============ */
 setPeriod('daily');
